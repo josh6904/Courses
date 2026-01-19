@@ -22,7 +22,6 @@
         h1 { letter-spacing: 2px; text-transform: uppercase; font-weight: 300; margin-bottom: 5px; }
         .subtitle { color: #888; margin-bottom: 30px; font-size: 0.9rem; }
         
-        /* THE FIX: Added !important to ensure it hides */
         .hidden { display: none !important; }
         
         .card {
@@ -194,7 +193,7 @@
     <!-- SCREEN 2: GAMEPLAY -->
     <div id="game" class="card hidden">
         <div style="display: flex; justify-content: space-between; align-items: center; color: #666; font-size: 0.8rem; font-family: monospace;">
-            <span id="step-counter">1 / 16</span>
+            <span id="step-counter">1 / 50</span>
             <span>SYNC: <span id="status-dot" style="color:red">●</span></span>
         </div>
 
@@ -212,40 +211,92 @@
     </div>
 
     <script>
-        // --- 1. THE DATA (The Full Menu) ---
+        // --- 1. THE DATA (The Large Menu - 50 Questions) ---
+        // You can easily add more to reach 100.
         
-        const courses = [
-            // APPETIZERS (Light, fun, warm-up)
+        const baseQuestions = [
+            // APPETIZERS
             { context: "The waiter brings the small plates. The restaurant is buzzing, but we are focused on our table.", phase: "APPETIZER", prompt: "What is a food combination you love that others find weird?" },
             { context: "We are sipping our drinks. The ice is just starting to melt.", phase: "APPETIZER", prompt: "What is a song you know every single word to, even though you don't like the artist?" },
             { context: "We are people-watching near the window.", phase: "APPETIZER", prompt: "If you were a fictional character, who would people say you are?" },
             { context: "The appetizers are finished, and we are getting comfortable.", phase: "APPETIZER", prompt: "What is a useless skill you have that you are weirdly proud of?" },
+            { context: "The music changes to a classic jazz track.", phase: "APPETIZER", prompt: "What was your first concert?" },
+            { context: "We are laughing at a joke the waiter told.", phase: "APPETIZER", prompt: "What is a movie everyone loves but you hated?" },
+            { context: "The lighting gets dimmer.", phase: "APPETIZER", prompt: "What is the most interesting conspiracy theory you know?" },
+            { context: "We notice a weird painting on the wall.", phase: "APPETIZER", prompt: "If you could have dinner with anyone, living or dead, who would it be?" },
+            { context: "We are waiting for our second drink.", phase: "APPETIZER", prompt: "What is a TV show you have watched more than 5 times?" },
+            { context: "We are discussing our day.", phase: "APPETIZER", prompt: "What is the most boring job you have ever had?" },
 
-            // ENTREE (Going deeper, a bit more serious)
+            // ENTREES
             { context: "The lights dim slightly. The main energy shifts. We are clearing the starters.", phase: "ENTRÉE", prompt: "What is a misconception people often have about you?" },
             { context: "The waiter pours wine. We settle in for the talk.", phase: "ENTRÉE", prompt: "What is something you've changed your mind about in the last year?" },
             { context: "We are cutting into our food. The conversation slows down.", phase: "ENTRÉE", prompt: "What is a piece of advice you wish you could give your younger self?" },
             { context: "The restaurant is quieter now. We are in our own bubble.", phase: "ENTRÉE", prompt: "What is something you are currently procrastinating on?" },
+            { context: "We pause to taste a bite of the main course.", phase: "ENTRÉE", prompt: "What is a risk you took that you don't regret?" },
+            { context: "We discuss the future.", phase: "ENTRÉE", prompt: "What is something you want to achieve in the next 5 years?" },
+            { context: "The waiter checks on us. We look up briefly.", phase: "ENTRÉE", prompt: "What is a habit you are trying to break?" },
+            { context: "We lean back to make room for the food.", phase: "ENTRÉE", prompt: "What is the best thing that happened to you this week?" },
+            { context: "We talk about our hobbies.", phase: "ENTRÉE", prompt: "What is a hobby you spent too much money on?" },
+            { context: "The table is slightly cluttered with plates.", phase: "ENTRÉE", prompt: "What is something you learned the hard way?" },
 
-            // MAIN COURSE (The Heavy Stuff - Vulnerability)
+            // MAIN COURSES
             { context: "The heavy plates are on the table. We aren't playing games anymore.", phase: "MAIN COURSE", prompt: "What is a fear you have that you've never admitted to anyone?" },
             { context: "We pause eating for a moment. It's getting real.", phase: "MAIN COURSE", prompt: "What is a memory that still makes you emotional when you think about it?" },
             { context: "The conversation has turned serious. We are looking each other in the eye.", phase: "MAIN COURSE", prompt: "What is something about your past that shaped who you are today?" },
             { context: "We are discussing the future over the last bites of the main.", phase: "MAIN COURSE", prompt: "What is something you hope to have achieved by this time next year?" },
+            { context: "The plates are half-empty. We are vulnerable.", phase: "MAIN COURSE", prompt: "What is a mistake you made that you wish you could apologize for?" },
+            { context: "We stop eating for a second.", phase: "MAIN COURSE", prompt: "When was the last time you felt truly at peace?" },
+            { context: "The noise of the restaurant fades away.", phase: "MAIN COURSE", prompt: "What is a relationship in your life that needs more attention?" },
+            { context: "We are picking at the last bits of food.", phase: "MAIN COURSE", prompt: "What is a value you hold so strongly that it's caused conflict?" },
+            { context: "We discuss our failures.", phase: "MAIN COURSE", prompt: "What is a time you failed, and how did you recover?" },
+            { context: "The conversation is intense and focused.", phase: "MAIN COURSE", prompt: "What is something you've always wanted to tell someone but didn't?" },
 
-            // DESSERT (Sweet, reflective, closing)
+            // DESSERTS
             { context: "The waiter clears the heavy plates. We lean back, relieved.", phase: "DESSERT", prompt: "What is something you are most grateful for right now?" },
             { context: "The dessert menu is between us. We are smiling.", phase: "DESSERT", prompt: "What is a compliment you've never forgotten?" },
             { context: "We are sharing something sweet. The tension has dissolved.", phase: "DESSERT", prompt: "What is a simple thing that makes you happy?" },
-            { context: "The check has arrived, but we aren't leaving yet.", phase: "DESSERT", prompt: "What is a question you wish people would ask you more often?" }
+            { context: "The check has arrived, but we aren't leaving yet.", phase: "DESSERT", prompt: "What is a question you wish people would ask you more often?" },
+            { context: "We are finishing our coffee.", phase: "DESSERT", prompt: "What is a memory you hope you never forget?" },
+            { context: "The restaurant is closing up. We are the last ones.", phase: "DESSERT", prompt: "What is something you want to be remembered for?" },
+            { context: "We are standing up to leave.", phase: "DESSERT", prompt: "What is a song that makes you feel alive?" },
+            { context: "We are outside on the sidewalk.", phase: "DESSERT", prompt: "What is something you are looking forward to tomorrow?" },
+            { context: "We say goodbye.", phase: "DESSERT", prompt: "What is the best thing about meeting a stranger?" },
+            { context: "The night ends.", phase: "DESSERT", prompt: "What is a kindness someone showed you that changed your life?" }
         ];
 
         const archetypes = ["The Detective", "The Comedian", "The Stoic", "The Dramatic", "The Optimist", "The Pessimist"];
 
-        // --- 2. PEERJS SETUP ---
+        // --- 2. PEERJS & SYNC SETUP ---
         let peer;
         let conn;
         let currentStep = 0;
+        let isHost = false;
+        let gameSeed = 0;
+        let shuffledCourses = [];
+
+        // --- 3. RANDOMIZATION ENGINE (The "100 Players" Logic) ---
+        function seededRandom(seed) {
+            var x = Math.sin(seed++) * 10000;
+            return x - Math.floor(x);
+        }
+
+        function shuffle(array, seed) {
+            let m = array.length, t, i;
+            let randomSeed = seed;
+            let result = array.slice(); // Copy array
+
+            // While there remain elements to shuffle…
+            while (m) {
+                // Pick a remaining element…
+                i = Math.floor(seededRandom(randomSeed) * m--);
+                // And swap it with the current element.
+                t = result[m];
+                result[m] = result[i];
+                result[i] = t;
+                randomSeed++; // Ensure next random call is deterministic
+            }
+            return result;
+        }
 
         function initPeer() {
             peer = new Peer(null, { debug: 2 });
@@ -262,14 +313,24 @@
             });
         }
 
-        // --- 3. HOST LOGIC ---
+        // --- 4. HOST LOGIC ---
         function hostGame() {
             document.getElementById('loading-host').classList.remove('hidden');
+            isHost = true;
             initPeer();
             
             peer.on('connection', (c) => {
                 conn = c;
                 setupDataHandlers();
+                
+                // Host generates seed
+                gameSeed = Math.floor(Math.random() * 999999);
+                
+                // Send seed to client immediately so they shuffle the same way
+                if(conn && conn.open) {
+                    conn.send({ type: 'INIT', seed: gameSeed });
+                }
+
                 setTimeout(() => {
                     alert("Partner connected!");
                     startGame();
@@ -277,7 +338,7 @@
             });
         }
 
-        // --- 4. JOIN LOGIC ---
+        // --- 5. JOIN LOGIC ---
         function joinGame() {
             const partnerId = document.getElementById('partner-id').value;
             if(!partnerId) return alert("Enter an ID");
@@ -288,7 +349,7 @@
                 conn = peer.connect(partnerId);
                 conn.on('open', () => {
                     setupDataHandlers();
-                    startGame();
+                    // Joiner waits for seed from Host before starting
                 });
                 
                 conn.on('error', (err) => {
@@ -297,11 +358,21 @@
             });
         }
 
-        // --- 5. SYNC LOGIC ---
+        // --- 6. DATA HANDLERS ---
         function setupDataHandlers() {
             conn.on('data', (data) => {
-                if (data.step !== undefined) {
-                    updateUI(data.step);
+                if (data.type === 'INIT') {
+                    // Client received seed, shuffle deck
+                    gameSeed = data.seed;
+                    startGame();
+                } else if (data.step !== undefined) {
+                    if (data.step === -1) {
+                        // Game Over Signal
+                        returnToHome();
+                    } else {
+                        // Normal Step Sync
+                        updateUI(data.step);
+                    }
                 }
             });
             
@@ -309,13 +380,17 @@
         }
 
         function startGame() {
+            // Both players shuffle using the same seed
+            shuffledCourses = shuffle(baseQuestions, gameSeed);
+            
             document.getElementById('lobby').classList.add('hidden');
             document.getElementById('game').classList.remove('hidden');
+            currentStep = 0;
             updateUI(0);
         }
 
         function nextStep() {
-            if (currentStep < courses.length - 1) {
+            if (currentStep < shuffledCourses.length - 1) {
                 currentStep++;
                 updateUI(currentStep);
                 
@@ -324,9 +399,11 @@
                 }
             } else {
                 // --- END OF GAME LOOP ---
-                if (confirm("Bon Appétit. The menu is complete. Return to home?")) {
-                    returnToHome();
+                // Send -1 to signal game over to partner
+                if(conn && conn.open) {
+                    conn.send({ step: -1 });
                 }
+                returnToHome();
             }
         }
 
@@ -334,6 +411,7 @@
             document.getElementById('game').classList.add('hidden');
             document.getElementById('lobby').classList.remove('hidden');
             currentStep = 0;
+            // Connection remains open, so they can play again immediately or chat
         }
 
         function copyId() {
@@ -354,17 +432,17 @@
             document.getElementById('modal').classList.add('hidden');
         }
 
-        // --- 6. UI UPDATES ---
+        // --- 7. UI UPDATES ---
         function updateUI(stepIndex) {
             currentStep = stepIndex;
-            const course = courses[stepIndex];
+            const course = shuffledCourses[stepIndex];
             
             // Fade effect
             const card = document.getElementById('game');
             card.style.opacity = '0';
             
             setTimeout(() => {
-                document.getElementById('step-counter').innerText = `${stepIndex + 1} / ${courses.length}`;
+                document.getElementById('step-counter').innerText = `${stepIndex + 1} / ${shuffledCourses.length}`;
                 document.getElementById('context-text').innerText = course.context;
                 document.getElementById('question-text').innerText = course.prompt;
                 
@@ -372,9 +450,9 @@
                 const phaseEl = document.getElementById('phase-indicator');
                 phaseEl.innerText = course.phase;
                 phaseEl.className = 'phase-tag';
-                if (stepIndex < 4) phaseEl.classList.add('phase-appetizer');
-                else if (stepIndex < 8) phaseEl.classList.add('phase-entree');
-                else if (stepIndex < 12) phaseEl.classList.add('phase-main');
+                if (course.phase === "APPETIZER") phaseEl.classList.add('phase-appetizer');
+                else if (course.phase === "ENTRÉE") phaseEl.classList.add('phase-entree');
+                else if (course.phase === "MAIN COURSE") phaseEl.classList.add('phase-main');
                 else phaseEl.classList.add('phase-dessert');
 
                 // Reset Archetype
