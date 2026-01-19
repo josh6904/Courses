@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>COURSES: The Raw Edition</title>
+    <title>COURSES: Synced</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         body {
@@ -50,7 +50,7 @@
             font-weight: 600;
         }
         button:active { transform: scale(0.96); }
-        button:disabled { background: #444; cursor: not-allowed; }
+        button:disabled { background: #444; cursor: not-allowed; transform: none; }
         
         button.secondary {
             background: transparent;
@@ -159,6 +159,10 @@
         }
         .copy-btn:hover { background: #444; }
 
+        /* Connection Status */
+        #connection-status { color: #ff5555; font-weight: bold; font-size: 0.8rem; margin-top: 10px;}
+        .connected { color: #00ff00 !important; }
+
         /* Modal */
         .modal-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
@@ -206,7 +210,7 @@
         <div class="subtitle">Connection through Chaos.</div>
         
         <div id="host-section">
-            <button onclick="hostGame()">Host Game</button>
+            <button onclick="hostGame()" style="background: #00d2ff;">CREATE GAME (HOST)</button>
             
             <div class="loader hidden" id="loading-host"></div>
             
@@ -214,13 +218,14 @@
                 <span id="my-peer-id" style="font-family: monospace; font-size: 1.1rem; color: #00d2ff;">...</span>
                 <button class="copy-btn" onclick="copyId()" title="Copy ID">📋</button>
             </div>
+            <div id="connection-status">Offline</div>
         </div>
 
         <div style="margin: 30px 0; border-bottom: 1px solid #333; width: 50%; margin-left: auto; margin-right: auto;"></div>
 
         <div id="join-section">
-            <input type="text" id="partner-id" placeholder="Enter Partner's ID">
-            <button class="secondary" onclick="joinGame()">Join Game</button>
+            <input type="text" id="partner-id" placeholder="Enter Host ID">
+            <button class="secondary" onclick="joinGame()">JOIN GAME</button>
         </div>
 
         <button class="info-btn" onclick="openModal()">What are Archetypes?</button>
@@ -263,7 +268,7 @@
             { type: 'question', phase: "APPETIZER", mode: "THE DEFENSIVE LAWYER", prompt: "Why is your favorite food objectively the best?" },
             { type: 'question', phase: "APPETIZER", mode: "THE OLD SOUL", prompt: "What is something young people don't understand?" },
             { type: 'challenge', phase: "APPETIZER", mode: "", prompt: "STARE OFF: Don't laugh for 30 seconds." },
-            { type: 'question', phase: "APPETIZER", mode: "THE EXCITED DOG", prompt: "What makes you the happiest right now?" },
+            { type: 'question', phase: "APPETIZER", mode: "THE EXCITED DOG", prompt: "What makes you happiest right now?" },
             { type: 'question', phase: "APPETIZER", mode: "THE GRANDMA", prompt: "What is a simple remedy for when you're feeling sad?" },
 
             // ENTREES (Medium Depth, Physical Challenges)
@@ -282,7 +287,7 @@
             { type: 'question', phase: "MAIN COURSE", mode: "THE GHOST", prompt: "If you could haunt someone from your past, who would it be?" },
             { type: 'challenge', phase: "MAIN COURSE", mode: "", prompt: "EYES: Look into each other's eyes for 45 seconds without speaking." },
             { type: 'question', phase: "MAIN COURSE", mode: "THE CONFESSOR", prompt: "What is something you pretend to know, but don't?" },
-            { type: 'question', phase: "MAIN COURSE", mode: "THE SAGE", prompt: "What is the lesson life keeps hitting you with?" },
+            { type: 'question', phase: "MAIN COURSE", mode: "THE SAGE", prompt: "What is a lesson life keeps hitting you with?" },
             { type: 'challenge', phase: "MAIN COURSE", mode: "", prompt: "VOICE: Say 'I am here' in your most honest voice." },
             { type: 'question', phase: "MAIN COURSE", mode: "THE PESSIMIST", prompt: "What is the worst thing that could happen this year?" },
             { type: 'question', phase: "MAIN COURSE", mode: "THE WARRIOR", prompt: "What are you currently fighting a battle against?" },
@@ -341,6 +346,11 @@
                 document.getElementById('loading-host').classList.add('hidden');
                 document.getElementById('id-display').classList.remove('hidden');
                 document.getElementById('my-peer-id').innerText = id;
+                
+                // If we are host, we are waiting
+                if(isHost) {
+                    document.getElementById('connection-status').innerText = "Waiting for player...";
+                }
             });
 
             peer.on('error', (err) => {
@@ -351,11 +361,18 @@
 
         // --- 3. HOST LOGIC ---
         function hostGame() {
+            if(conn && conn.open) return alert("You already have a connected player!");
+            
             document.getElementById('loading-host').classList.remove('hidden');
             isHost = true;
             initPeer();
             
             peer.on('connection', (c) => {
+                if(conn && conn.open) {
+                    c.close(); // Reject extra connections (1 Host = 1 Player)
+                    return;
+                }
+                
                 conn = c;
                 setupDataHandlers();
                 
@@ -367,8 +384,10 @@
                     conn.send({ type: 'INIT', seed: gameSeed });
                 }
 
+                document.getElementById('connection-status').innerText = "Connected";
+                document.getElementById('connection-status').classList.add('connected');
+
                 setTimeout(() => {
-                    // alert("Partner connected!"); // Optional alert, disrupts flow
                     startGame();
                 }, 500);
             });
@@ -386,10 +405,12 @@
                 conn.on('open', () => {
                     setupDataHandlers();
                     // Joiner waits for seed from Host before starting
+                    document.getElementById('connection-status').innerText = "Syncing...";
                 });
                 
                 conn.on('error', (err) => {
                     alert("Could not connect to ID. Check if it's correct.");
+                    document.getElementById('connection-status').innerText = "Connection Failed";
                 });
             });
         }
@@ -398,17 +419,31 @@
         function setupDataHandlers() {
             conn.on('data', (data) => {
                 if (data.type === 'INIT') {
+                    // Client received seed, shuffle deck
                     gameSeed = data.seed;
+                    document.getElementById('connection-status').innerText = "Connected";
+                    document.getElementById('connection-status').classList.add('connected');
                     startGame();
                 } else if (data.step !== undefined) {
                     if (data.step === -1) {
+                        // Game Over Signal
                         returnToHome();
                     } else {
+                        // Sync Logic: FORCE UPDATE to match peer
+                        // This ensures that if Peer A clicks 'Next', Peer B is dragged along.
                         updateUI(data.step);
-                        isSyncing = false; // Re-enable button
+                        isSyncing = false; 
                         document.getElementById('next-btn').disabled = false;
                     }
                 }
+            });
+            
+            // Handle Disconnection
+            conn.on('close', () => {
+                alert("Partner disconnected.");
+                document.getElementById('connection-status').innerText = "Disconnected";
+                document.getElementById('connection-status').classList.remove('connected');
+                if(!isHost) returnToHome();
             });
             
             document.getElementById('status-dot').style.color = '#0f0'; // Green dot
@@ -425,16 +460,16 @@
         }
 
         function nextStep() {
-            if(isSyncing) return; // Prevent double clicks
+            if(isSyncing) return; 
 
             if (currentStep < shuffledDeck.length - 1) {
                 currentStep++;
                 
-                // UI Feedback: Disable button
+                // UI Feedback: Disable button to prevent spam
                 isSyncing = true;
                 document.getElementById('next-btn').disabled = true;
                 
-                // Update Local Immediately (Predictive UI)
+                // Update Local Immediately
                 updateUI(currentStep);
                 
                 // Send to Partner
@@ -457,6 +492,7 @@
             isSyncing = false;
             document.getElementById('next-btn').disabled = false;
             document.getElementById('next-btn').innerText = "Next";
+            document.getElementById('connection-status').innerText = isHost ? "Connected" : "Connected";
         }
 
         function copyId() {
