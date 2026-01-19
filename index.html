@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>COURSES: The Game of Connection</title>
-    <!-- Load PeerJS from CDN -->
+    <title>COURSES: The Menu</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         body {
             font-family: 'Helvetica Neue', sans-serif;
-            background-color: #111;
-            color: #fff;
+            background-color: #0f0f0f;
+            color: #f0f0f0;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -20,119 +19,228 @@
             padding: 20px;
             text-align: center;
         }
-        h1 { letter-spacing: 2px; text-transform: uppercase; font-weight: 300; }
-        .highlight { color: #ff007f; font-weight: bold; }
+        h1 { letter-spacing: 2px; text-transform: uppercase; font-weight: 300; margin-bottom: 5px; }
+        .subtitle { color: #888; margin-bottom: 30px; font-size: 0.9rem; }
+        
+        /* THE FIX: Added !important to ensure it hides */
+        .hidden { display: none !important; }
         
         .card {
-            background: #222;
-            padding: 30px;
-            border-radius: 12px;
-            max-width: 500px;
+            background: #1a1a1a;
+            padding: 40px 30px;
+            border-radius: 16px;
+            max-width: 520px;
             width: 100%;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
             border: 1px solid #333;
             transition: all 0.3s ease;
+            position: relative;
         }
         
         button {
             background: #ff007f;
             color: white;
             border: none;
-            padding: 15px 30px;
-            font-size: 1.1rem;
+            padding: 16px 30px;
+            font-size: 1rem;
             border-radius: 50px;
             cursor: pointer;
             margin-top: 20px;
-            transition: transform 0.2s;
+            transition: transform 0.2s, background 0.2s;
+            width: 100%;
+            font-weight: 600;
         }
-        button:active { transform: scale(0.95); }
+        button:active { transform: scale(0.96); }
+        button:hover { background: #e60073; }
         
+        button.secondary {
+            background: transparent;
+            border: 1px solid #444;
+            color: #aaa;
+            margin-top: 10px;
+        }
+        button.secondary:hover { border-color: #888; color: #fff; }
+        
+        button.info-btn {
+            background: transparent;
+            border: none;
+            color: #666;
+            text-decoration: underline;
+            margin-top: 15px;
+            font-size: 0.85rem;
+            width: auto;
+        }
+
         input {
             padding: 15px;
             border-radius: 8px;
             border: 1px solid #444;
-            background: #333;
+            background: #111;
             color: white;
-            width: 70%;
+            width: 60%;
             margin-bottom: 10px;
             text-align: center;
             font-size: 1.2rem;
         }
-
-        .hidden { display: none; }
-        .scenario-text { font-size: 1.3rem; line-height: 1.5; margin: 20px 0; }
-        .context { font-style: italic; color: #aaa; font-size: 0.9rem; margin-bottom: 20px; }
+        
+        .scenario-text { font-size: 1.4rem; line-height: 1.6; margin: 25px 0; font-weight: 500; min-height: 80px; display: flex; align-items: center; justify-content: center;}
+        .context { font-style: italic; color: #aaa; font-size: 0.95rem; margin-bottom: 20px; min-height: 50px; border-left: 2px solid #333; padding-left: 15px; display: flex; align-items: center;}
+        
         .archetype { 
             color: #00d2ff; 
             border: 1px solid #00d2ff; 
-            padding: 5px 15px; 
-            border-radius: 15px; 
+            padding: 6px 18px; 
+            border-radius: 20px; 
             display: inline-block;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             font-size: 0.9rem;
+            font-weight: bold;
+            letter-spacing: 1px;
         }
+
+        /* Phase Tags */
+        .phase-tag {
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 2px;
+            padding: 6px 12px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: inline-block;
+            font-weight: bold;
+        }
+        
+        .phase-appetizer { background: #2a2a2a; color: #ccc; border: 1px solid #444; }
+        .phase-entree { background: #331111; color: #ff6b6b; border: 1px solid #552222; }
+        .phase-main { background: #1a1a33; color: #7a7aff; border: 1px solid #222255; }
+        .phase-dessert { background: #332211; color: #ffaa55; border: 1px solid #553322; }
+
         .loader { border-top: 3px solid #ff007f; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; margin: 20px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .copy-container { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 25px; }
+        .copy-btn { 
+            background: #333; padding: 10px 15px; border-radius: 8px; border: none; color: white; cursor: pointer; width: auto; margin-top: 0; font-size: 0.9rem;
+        }
+        .copy-btn:hover { background: #444; }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 100;
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background: #1a1a1a;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 400px;
+            border: 1px solid #444;
+            text-align: left;
+        }
+        .modal-content h3 { color: #fff; margin-top: 0; }
+        .modal-content p { color: #bbb; line-height: 1.5; font-size: 0.9rem; }
+        .modal-content li { margin-bottom: 8px; color: #ddd; font-size: 0.9rem; }
+
     </style>
 </head>
 <body>
 
+    <!-- ARCHETYPE INFO MODAL -->
+    <div id="modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3>The Archetypes</h3>
+            <p>Think of these as <strong>Social Shields</strong>. If you feel shy or exposed, activate an Archetype to hide behind a character while sharing your truth.</p>
+            <ul>
+                <li><strong>The Detective:</strong> Ask "Why?" a lot. Be curious.</li>
+                <li><strong>The Comedian:</strong> Make it funny, even if it's sad.</li>
+                <li><strong>The Stoic:</strong> Share facts, but show no emotion.</li>
+                <li><strong>The Dramatic:</strong> Make everything sound intense.</li>
+            </ul>
+            <p style="text-align: center; margin-top: 20px;">
+                <button onclick="closeModal()">Got it</button>
+            </p>
+        </div>
+    </div>
+
     <!-- SCREEN 1: LOBBY -->
     <div id="lobby" class="card">
         <h1>Courses</h1>
-        <p>30 Scenarios. 2 Strangers. Zero Filter.</p>
+        <div class="subtitle">A structured meal for two strangers.</div>
         
         <div id="host-section">
             <button onclick="hostGame()">Host Game</button>
-            <p id="my-peer-id" class="context">Your ID will appear here...</p>
-            <div id="loading-host" class="loader hidden"></div>
+            
+            <div class="loader hidden" id="loading-host"></div>
+            
+            <div id="id-display" class="copy-container hidden">
+                <span id="my-peer-id" style="font-family: monospace; font-size: 1.1rem; color: #00d2ff;">...</span>
+                <button class="copy-btn" onclick="copyId()" title="Copy ID">📋</button>
+            </div>
         </div>
 
-        <div style="margin: 20px 0; color: #555;">- OR -</div>
+        <div style="margin: 30px 0; border-bottom: 1px solid #333; width: 50%; margin-left: auto; margin-right: auto;"></div>
 
         <div id="join-section">
             <input type="text" id="partner-id" placeholder="Enter Partner's ID">
-            <br>
-            <button onclick="joinGame()">Join Game</button>
+            <button class="secondary" onclick="joinGame()">Join Game</button>
         </div>
+
+        <button class="info-btn" onclick="openModal()">What are Archetypes?</button>
     </div>
 
     <!-- SCREEN 2: GAMEPLAY -->
     <div id="game" class="card hidden">
-        <div style="display: flex; justify-content: space-between; color: #666; font-size: 0.8rem;">
-            <span id="step-counter">Course 1/30</span>
-            <span>Syncing: <span id="status-dot" style="color:red">●</span></span>
+        <div style="display: flex; justify-content: space-between; align-items: center; color: #666; font-size: 0.8rem; font-family: monospace;">
+            <span id="step-counter">1 / 16</span>
+            <span>SYNC: <span id="status-dot" style="color:red">●</span></span>
         </div>
+
+        <div id="phase-indicator" class="phase-tag phase-appetizer">APPETIZER</div>
 
         <div id="archetype-display" class="archetype hidden">ARCHETYPE: THE DETECTIVE</div>
 
-        <div class="context" id="context-text">Context...</div>
-        <h2 class="scenario-text" id="question-text">Question...</h2>
+        <div class="context" id="context-text">The waiter brings the small plates. The restaurant is buzzing, but we are focused on our table.</div>
+        <h2 class="scenario-text" id="question-text">What is the most overrated food trend?</h2>
 
-        <div style="display: flex; gap: 10px;">
-            <button onclick="nextStep()" style="flex:1">Next Course</button>
-            <button onclick="rollArchetype()" style="background: #333; border: 1px solid #555;">Roll Persona</button>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            <button onclick="nextStep()">Next Course</button>
+            <button class="secondary" onclick="rollArchetype()">Roll Persona Shield</button>
         </div>
     </div>
 
     <script>
-        // --- 1. THE DATA (The 30 Courses) ---
+        // --- 1. THE DATA (The Full Menu) ---
+        
         const courses = [
-            { context: "You are on a delayed flight.", prompt: "What is a dream you have that you are afraid to pursue?" },
-            { context: "You are showing childhood photos.", prompt: "Describe a moment that defined who you are today." },
-            { context: "You are at a dinner party.", prompt: "What is something you value that most people overlook?" },
-            { context: "You are arguing about time.", prompt: "How do you feel you waste the most time in your life?" },
-            { context: "You are talking to a therapist.", prompt: "What is a memory that makes you smile?" },
-            { context: "You are discussing success.", prompt: "What does 'success' look like to you in 5 years?" },
-            { context: "You are on a first date.", prompt: "What is the most romantic thing you've done?" },
-            { context: "You are stranded on an island.", prompt: "What is one skill you wish you had?" },
-            { context: "You are at a high school reunion.", prompt: "What is a lie you told in high school?" },
-            { context: "You are watching a sunset.", prompt: "What is something you wish you could say to an ex?" },
-            // ... Add up to 30 ...
-            { context: "The Final Course.", prompt: "What is something you want to be remembered for?" }
+            // APPETIZERS (Light, fun, warm-up)
+            { context: "The waiter brings the small plates. The restaurant is buzzing, but we are focused on our table.", phase: "APPETIZER", prompt: "What is a food combination you love that others find weird?" },
+            { context: "We are sipping our drinks. The ice is just starting to melt.", phase: "APPETIZER", prompt: "What is a song you know every single word to, even though you don't like the artist?" },
+            { context: "We are people-watching near the window.", phase: "APPETIZER", prompt: "If you were a fictional character, who would people say you are?" },
+            { context: "The appetizers are finished, and we are getting comfortable.", phase: "APPETIZER", prompt: "What is a useless skill you have that you are weirdly proud of?" },
+
+            // ENTREE (Going deeper, a bit more serious)
+            { context: "The lights dim slightly. The main energy shifts. We are clearing the starters.", phase: "ENTRÉE", prompt: "What is a misconception people often have about you?" },
+            { context: "The waiter pours wine. We settle in for the talk.", phase: "ENTRÉE", prompt: "What is something you've changed your mind about in the last year?" },
+            { context: "We are cutting into our food. The conversation slows down.", phase: "ENTRÉE", prompt: "What is a piece of advice you wish you could give your younger self?" },
+            { context: "The restaurant is quieter now. We are in our own bubble.", phase: "ENTRÉE", prompt: "What is something you are currently procrastinating on?" },
+
+            // MAIN COURSE (The Heavy Stuff - Vulnerability)
+            { context: "The heavy plates are on the table. We aren't playing games anymore.", phase: "MAIN COURSE", prompt: "What is a fear you have that you've never admitted to anyone?" },
+            { context: "We pause eating for a moment. It's getting real.", phase: "MAIN COURSE", prompt: "What is a memory that still makes you emotional when you think about it?" },
+            { context: "The conversation has turned serious. We are looking each other in the eye.", phase: "MAIN COURSE", prompt: "What is something about your past that shaped who you are today?" },
+            { context: "We are discussing the future over the last bites of the main.", phase: "MAIN COURSE", prompt: "What is something you hope to have achieved by this time next year?" },
+
+            // DESSERT (Sweet, reflective, closing)
+            { context: "The waiter clears the heavy plates. We lean back, relieved.", phase: "DESSERT", prompt: "What is something you are most grateful for right now?" },
+            { context: "The dessert menu is between us. We are smiling.", phase: "DESSERT", prompt: "What is a compliment you've never forgotten?" },
+            { context: "We are sharing something sweet. The tension has dissolved.", phase: "DESSERT", prompt: "What is a simple thing that makes you happy?" },
+            { context: "The check has arrived, but we aren't leaving yet.", phase: "DESSERT", prompt: "What is a question you wish people would ask you more often?" }
         ];
 
-        const archetypes = ["The Stoic", "The Dramatic", "The Scientist", "The Comedian", "The Recluse"];
+        const archetypes = ["The Detective", "The Comedian", "The Stoic", "The Dramatic", "The Optimist", "The Pessimist"];
 
         // --- 2. PEERJS SETUP ---
         let peer;
@@ -140,15 +248,18 @@
         let currentStep = 0;
 
         function initPeer() {
-            // Create peer with default ID (or specify one)
             peer = new Peer(null, { debug: 2 });
 
             peer.on('open', (id) => {
-                document.getElementById('my-peer-id').innerText = `Share this ID: ${id}`;
                 document.getElementById('loading-host').classList.add('hidden');
+                document.getElementById('id-display').classList.remove('hidden');
+                document.getElementById('my-peer-id').innerText = id;
             });
 
-            peer.on('error', (err) => console.error(err));
+            peer.on('error', (err) => {
+                console.error(err);
+                alert("Connection error. Please refresh.");
+            });
         }
 
         // --- 3. HOST LOGIC ---
@@ -156,12 +267,13 @@
             document.getElementById('loading-host').classList.remove('hidden');
             initPeer();
             
-            // Wait for connection
             peer.on('connection', (c) => {
                 conn = c;
                 setupDataHandlers();
-                alert("Partner connected!");
-                startGame();
+                setTimeout(() => {
+                    alert("Partner connected!");
+                    startGame();
+                }, 500);
             });
         }
 
@@ -177,6 +289,10 @@
                 conn.on('open', () => {
                     setupDataHandlers();
                     startGame();
+                });
+                
+                conn.on('error', (err) => {
+                    alert("Could not connect to ID. Check if it's correct.");
                 });
             });
         }
@@ -201,17 +317,41 @@
         function nextStep() {
             if (currentStep < courses.length - 1) {
                 currentStep++;
-                
-                // 1. Update my screen
                 updateUI(currentStep);
                 
-                // 2. Send to partner
                 if(conn && conn.open) {
                     conn.send({ step: currentStep });
                 }
             } else {
-                alert("Bon Appétit. The 30 Courses are complete.");
+                // --- END OF GAME LOOP ---
+                if (confirm("Bon Appétit. The menu is complete. Return to home?")) {
+                    returnToHome();
+                }
             }
+        }
+
+        function returnToHome() {
+            document.getElementById('game').classList.add('hidden');
+            document.getElementById('lobby').classList.remove('hidden');
+            currentStep = 0;
+        }
+
+        function copyId() {
+            const idText = document.getElementById('my-peer-id').innerText;
+            navigator.clipboard.writeText(idText).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                const original = btn.innerText;
+                btn.innerText = "✅";
+                setTimeout(() => btn.innerText = original, 1500);
+            });
+        }
+
+        function openModal() {
+            document.getElementById('modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.add('hidden');
         }
 
         // --- 6. UI UPDATES ---
@@ -224,10 +364,22 @@
             card.style.opacity = '0';
             
             setTimeout(() => {
-                document.getElementById('step-counter').innerText = `Course ${stepIndex + 1}/${courses.length}`;
+                document.getElementById('step-counter').innerText = `${stepIndex + 1} / ${courses.length}`;
                 document.getElementById('context-text').innerText = course.context;
                 document.getElementById('question-text').innerText = course.prompt;
-                document.getElementById('archetype-display').classList.add('hidden'); // Reset archetype
+                
+                // Update Phase Color & Name
+                const phaseEl = document.getElementById('phase-indicator');
+                phaseEl.innerText = course.phase;
+                phaseEl.className = 'phase-tag';
+                if (stepIndex < 4) phaseEl.classList.add('phase-appetizer');
+                else if (stepIndex < 8) phaseEl.classList.add('phase-entree');
+                else if (stepIndex < 12) phaseEl.classList.add('phase-main');
+                else phaseEl.classList.add('phase-dessert');
+
+                // Reset Archetype
+                document.getElementById('archetype-display').classList.add('hidden'); 
+                
                 card.style.opacity = '1';
             }, 300);
         }
