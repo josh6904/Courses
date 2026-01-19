@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COURSES: The Game of Connection</title>
+    <!-- Load PeerJS from CDN -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', sans-serif;
+            background-color: #111;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        h1 { letter-spacing: 2px; text-transform: uppercase; font-weight: 300; }
+        .highlight { color: #ff007f; font-weight: bold; }
+        
+        .card {
+            background: #222;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid #333;
+            transition: all 0.3s ease;
+        }
+        
+        button {
+            background: #ff007f;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: transform 0.2s;
+        }
+        button:active { transform: scale(0.95); }
+        
+        input {
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #444;
+            background: #333;
+            color: white;
+            width: 70%;
+            margin-bottom: 10px;
+            text-align: center;
+            font-size: 1.2rem;
+        }
+
+        .hidden { display: none; }
+        .scenario-text { font-size: 1.3rem; line-height: 1.5; margin: 20px 0; }
+        .context { font-style: italic; color: #aaa; font-size: 0.9rem; margin-bottom: 20px; }
+        .archetype { 
+            color: #00d2ff; 
+            border: 1px solid #00d2ff; 
+            padding: 5px 15px; 
+            border-radius: 15px; 
+            display: inline-block;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+        .loader { border-top: 3px solid #ff007f; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <!-- SCREEN 1: LOBBY -->
+    <div id="lobby" class="card">
+        <h1>Courses</h1>
+        <p>30 Scenarios. 2 Strangers. Zero Filter.</p>
+        
+        <div id="host-section">
+            <button onclick="hostGame()">Host Game</button>
+            <p id="my-peer-id" class="context">Your ID will appear here...</p>
+            <div id="loading-host" class="loader hidden"></div>
+        </div>
+
+        <div style="margin: 20px 0; color: #555;">- OR -</div>
+
+        <div id="join-section">
+            <input type="text" id="partner-id" placeholder="Enter Partner's ID">
+            <br>
+            <button onclick="joinGame()">Join Game</button>
+        </div>
+    </div>
+
+    <!-- SCREEN 2: GAMEPLAY -->
+    <div id="game" class="card hidden">
+        <div style="display: flex; justify-content: space-between; color: #666; font-size: 0.8rem;">
+            <span id="step-counter">Course 1/30</span>
+            <span>Syncing: <span id="status-dot" style="color:red">●</span></span>
+        </div>
+
+        <div id="archetype-display" class="archetype hidden">ARCHETYPE: THE DETECTIVE</div>
+
+        <div class="context" id="context-text">Context...</div>
+        <h2 class="scenario-text" id="question-text">Question...</h2>
+
+        <div style="display: flex; gap: 10px;">
+            <button onclick="nextStep()" style="flex:1">Next Course</button>
+            <button onclick="rollArchetype()" style="background: #333; border: 1px solid #555;">Roll Persona</button>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. THE DATA (The 30 Courses) ---
+        const courses = [
+            { context: "You are on a delayed flight.", prompt: "What is a dream you have that you are afraid to pursue?" },
+            { context: "You are showing childhood photos.", prompt: "Describe a moment that defined who you are today." },
+            { context: "You are at a dinner party.", prompt: "What is something you value that most people overlook?" },
+            { context: "You are arguing about time.", prompt: "How do you feel you waste the most time in your life?" },
+            { context: "You are talking to a therapist.", prompt: "What is a memory that makes you smile?" },
+            { context: "You are discussing success.", prompt: "What does 'success' look like to you in 5 years?" },
+            { context: "You are on a first date.", prompt: "What is the most romantic thing you've done?" },
+            { context: "You are stranded on an island.", prompt: "What is one skill you wish you had?" },
+            { context: "You are at a high school reunion.", prompt: "What is a lie you told in high school?" },
+            { context: "You are watching a sunset.", prompt: "What is something you wish you could say to an ex?" },
+            // ... Add up to 30 ...
+            { context: "The Final Course.", prompt: "What is something you want to be remembered for?" }
+        ];
+
+        const archetypes = ["The Stoic", "The Dramatic", "The Scientist", "The Comedian", "The Recluse"];
+
+        // --- 2. PEERJS SETUP ---
+        let peer;
+        let conn;
+        let currentStep = 0;
+
+        function initPeer() {
+            // Create peer with default ID (or specify one)
+            peer = new Peer(null, { debug: 2 });
+
+            peer.on('open', (id) => {
+                document.getElementById('my-peer-id').innerText = `Share this ID: ${id}`;
+                document.getElementById('loading-host').classList.add('hidden');
+            });
+
+            peer.on('error', (err) => console.error(err));
+        }
+
+        // --- 3. HOST LOGIC ---
+        function hostGame() {
+            document.getElementById('loading-host').classList.remove('hidden');
+            initPeer();
+            
+            // Wait for connection
+            peer.on('connection', (c) => {
+                conn = c;
+                setupDataHandlers();
+                alert("Partner connected!");
+                startGame();
+            });
+        }
+
+        // --- 4. JOIN LOGIC ---
+        function joinGame() {
+            const partnerId = document.getElementById('partner-id').value;
+            if(!partnerId) return alert("Enter an ID");
+
+            initPeer();
+
+            peer.on('open', (id) => {
+                conn = peer.connect(partnerId);
+                conn.on('open', () => {
+                    setupDataHandlers();
+                    startGame();
+                });
+            });
+        }
+
+        // --- 5. SYNC LOGIC ---
+        function setupDataHandlers() {
+            conn.on('data', (data) => {
+                if (data.step !== undefined) {
+                    updateUI(data.step);
+                }
+            });
+            
+            document.getElementById('status-dot').style.color = '#0f0'; // Green dot
+        }
+
+        function startGame() {
+            document.getElementById('lobby').classList.add('hidden');
+            document.getElementById('game').classList.remove('hidden');
+            updateUI(0);
+        }
+
+        function nextStep() {
+            if (currentStep < courses.length - 1) {
+                currentStep++;
+                
+                // 1. Update my screen
+                updateUI(currentStep);
+                
+                // 2. Send to partner
+                if(conn && conn.open) {
+                    conn.send({ step: currentStep });
+                }
+            } else {
+                alert("Bon Appétit. The 30 Courses are complete.");
+            }
+        }
+
+        // --- 6. UI UPDATES ---
+        function updateUI(stepIndex) {
+            currentStep = stepIndex;
+            const course = courses[stepIndex];
+            
+            // Fade effect
+            const card = document.getElementById('game');
+            card.style.opacity = '0';
+            
+            setTimeout(() => {
+                document.getElementById('step-counter').innerText = `Course ${stepIndex + 1}/${courses.length}`;
+                document.getElementById('context-text').innerText = course.context;
+                document.getElementById('question-text').innerText = course.prompt;
+                document.getElementById('archetype-display').classList.add('hidden'); // Reset archetype
+                card.style.opacity = '1';
+            }, 300);
+        }
+
+        function rollArchetype() {
+            const randomArchetype = archetypes[Math.floor(Math.random() * archetypes.length)];
+            const display = document.getElementById('archetype-display');
+            display.innerText = `PERSONA: ${randomArchetype.toUpperCase()}`;
+            display.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
