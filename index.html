@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>COURSES: Solo Mode</title>
+    <title>COURSES: Infinite Journey</title>
     <style>
         body {
             font-family: 'Helvetica Neue', sans-serif;
@@ -25,9 +25,9 @@
         
         .card {
             background: #161616;
-            padding: 40px 30px;
+            padding: 45px 35px;
             border-radius: 16px;
-            max-width: 550px;
+            max-width: 650px;
             width: 100%;
             box-shadow: 0 20px 50px rgba(0,0,0,0.7);
             border: 1px solid #333;
@@ -39,95 +39,75 @@
             background: #ff007f;
             color: white;
             border: none;
-            padding: 16px 30px;
+            padding: 18px 30px;
             font-size: 1rem;
             border-radius: 50px;
             cursor: pointer;
-            margin-top: 25px;
+            margin-top: 30px;
             transition: transform 0.2s, background 0.2s;
             width: 100%;
             font-weight: 600;
+            letter-spacing: 1px;
         }
         button:active { transform: scale(0.96); }
-        button:disabled { background: #444; cursor: not-allowed; transform: none; }
+        button:hover { background: #e60073; }
         
         button.secondary {
             background: transparent;
             border: 1px solid #444;
             color: #aaa;
-            margin-top: 10px;
+            margin-top: 15px;
         }
         button.secondary:hover { border-color: #888; color: #fff; }
-        
-        button.info-btn {
-            background: transparent;
-            border: none;
-            color: #666;
-            text-decoration: underline;
-            margin-top: 15px;
-            font-size: 0.85rem;
-            width: auto;
-        }
-        
-        /* The Mode Box */
-        .mode-box {
-            font-family: 'Courier New', monospace;
-            text-transform: uppercase;
-            font-weight: bold;
-            letter-spacing: 1px;
-            color: #00d2ff;
-            border: 1px solid #00d2ff;
-            background: rgba(0, 210, 255, 0.05);
-            padding: 12px 15px;
-            border-radius: 8px;
-            margin-bottom: 25px;
-            font-size: 0.95rem;
-            display: flex;
-            align-items: center;
+
+        .scenario-text { 
+            font-size: 1.6rem; 
+            line-height: 1.6; 
+            margin: 25px 0; 
+            font-weight: 400; 
+            min-height: 100px; 
+            display: flex; 
+            align-items: center; 
             justify-content: center;
-            line-height: 1.4;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
 
-        /* The Challenge Box */
+        /* Challenge/Constraint Box */
         .challenge-box {
-            color: #ffaa00;
-            border: 2px solid #ffaa00;
-            background: rgba(255, 170, 0, 0.05);
-            padding: 30px 20px;
-            border-radius: 16px;
-            margin-bottom: 30px;
-            font-size: 1.5rem;
+            color: #b026ff;
+            border: 2px dashed #b026ff;
+            background: rgba(176, 38, 255, 0.05);
+            padding: 20px 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            font-size: 1.1rem;
             font-weight: bold;
             display: flex;
             align-items: center;
             justify-content: center;
             text-transform: uppercase;
             line-height: 1.3;
-            box-shadow: 0 0 20px rgba(255, 170, 0, 0.1);
+            box-shadow: 0 0 20px rgba(176, 38, 255, 0.1);
+            word-break: break-word;
         }
-
-        .scenario-text { font-size: 1.5rem; line-height: 1.6; margin: 25px 0; font-weight: 500; min-height: 80px; display: flex; align-items: center; justify-content: center; text-shadow: 0 2px 4px rgba(0,0,0,0.5);}
         
-        .archetype { 
-            color: #ff007f; 
-            border: 1px solid #ff007f; 
-            padding: 6px 18px; 
-            border-radius: 20px; 
-            display: inline-block;
-            margin-bottom: 25px;
-            font-size: 0.9rem;
-            font-weight: bold;
-            letter-spacing: 1px;
+        /* Combo Mode (Constraint) Styling */
+        .combo-mode {
+            color: #ff007f;
+            border: 2px solid #ff007f;
+            background: rgba(255, 0, 127, 0.05);
+            box-shadow: 0 0 20px rgba(255, 0, 127, 0.1);
+            font-size: 1rem;
         }
 
         /* Phase Tags */
         .phase-tag {
             text-transform: uppercase;
             font-size: 0.75rem;
-            letter-spacing: 2px;
-            padding: 6px 12px;
+            letter-spacing: 3px;
+            padding: 8px 16px;
             border-radius: 4px;
-            margin-bottom: 10px;
+            margin-bottom: 20px;
             display: inline-block;
             font-weight: bold;
         }
@@ -137,154 +117,191 @@
         .phase-main { background: #1a1a33; color: #7a7aff; border: 1px solid #222255; }
         .phase-dessert { background: #332211; color: #ffaa55; border: 1px solid #553322; }
 
-        /* Modal */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.85);
-            display: flex; align-items: center; justify-content: center;
-            z-index: 100;
-            backdrop-filter: blur(5px);
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            height: 4px;
+            background: #222;
+            border-radius: 2px;
+            margin-bottom: 25px;
+            overflow: hidden;
         }
-        .modal-content {
-            background: #1a1a1a;
-            padding: 30px;
-            border-radius: 12px;
-            max-width: 400px;
-            border: 1px solid #444;
-            text-align: left;
+        .progress-bar {
+            height: 100%;
+            background: #ff007f;
+            width: 0%;
+            transition: width 0.5s ease;
         }
-        .modal-content h3 { color: #fff; margin-top: 0; }
-        .modal-content p { color: #bbb; line-height: 1.5; font-size: 0.9rem; }
-        .modal-content li { margin-bottom: 8px; color: #ddd; font-size: 0.9rem; }
+
+        .step-counter {
+            color: #444;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            display: block;
+        }
 
     </style>
 </head>
 <body>
 
-    <!-- ARCHETYPE INFO MODAL -->
-    <div id="modal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <h3>The Archetypes</h3>
-            <p>Think of these as <strong>Social Shields</strong>. If you feel shy or exposed, activate an Archetype to hide behind a character while sharing your truth.</p>
-            <ul>
-                <li><strong>The Detective:</strong> Ask "Why?" a lot. Be curious.</li>
-                <li><strong>The Comedian:</strong> Make it funny, even if it's sad.</li>
-                <li><strong>The Stoic:</strong> Share facts, but show no emotion.</li>
-                <li><strong>The Dramatic:</strong> Make everything sound intense.</li>
-            </ul>
-            <p style="text-align: center; margin-top: 20px;">
-                <button onclick="closeModal()">Got it</button>
-            </p>
-        </div>
-    </div>
-
     <!-- SCREEN 1: LOBBY -->
     <div id="lobby" class="card">
         <h1>Courses</h1>
-        <div class="subtitle">A Menu for Connection.</div>
+        <div class="subtitle">Infinite Journey.</div>
         
-        <button onclick="startGame()" style="background: #00d2ff;">START EXPERIENCE</button>
+        <button onclick="startGame()" style="background: #fff; color: #000;">START NEW JOURNEY</button>
         
-        <p style="color: #666; font-size: 0.8rem; margin-top: 20px;">No connection required. Works offline.</p>
-        
-        <button class="info-btn" onclick="openModal()">What are Archetypes?</button>
+        <p style="color: #666; font-size: 0.8rem; margin-top: 30px; line-height: 1.5;">
+            Every game creates a unique mix.<br>
+            Dynamic weird constraints included.
+        </p>
     </div>
 
     <!-- SCREEN 2: GAMEPLAY -->
     <div id="game" class="card hidden">
-        <div style="display: flex; justify-content: center; align-items: center; color: #666; font-size: 0.8rem; font-family: monospace;">
-            <span id="step-counter">1 / 16</span>
+        <span id="step-counter">1 / 36</span>
+        
+        <div class="progress-container">
+            <div id="progress-bar" class="progress-bar"></div>
         </div>
 
         <div id="phase-indicator" class="phase-tag phase-appetizer">APPETIZER</div>
 
-        <div id="archetype-display" class="archetype hidden">ARCHETYPE: THE DETECTIVE</div>
+        <!-- COMBO CONSTRAINT (Visible during Questions) -->
+        <div id="challenge-box" class="challenge-box hidden">CONSTRAINT</div>
 
-        <!-- MODE BOX (For Questions) -->
-        <div id="mode-box" class="mode-box">MODE: THE GOSSIP COLUMNIST</div>
+        <!-- QUESTION AREA -->
+        <h2 class="scenario-text" id="question-text">Loading...</h2>
 
-        <!-- CHALLENGE BOX (Hidden by default) -->
-        <div id="challenge-box" class="challenge-box hidden">CHARADES: ACT OUT "THE AWKWARD FIRST DATE"</div>
-        
-        <h2 class="scenario-text" id="question-text">What is most overrated food trend?</h2>
-
-        <button id="next-btn" onclick="nextStep()">Next Turn</button>
+        <button id="next-btn" onclick="nextStep()">Next Step</button>
         <button class="secondary hidden" id="end-btn" onclick="endGame()">End Session</button>
-        <button class="secondary" onclick="rollArchetype()">Roll Persona</button>
     </div>
 
     <script>
-        // --- 1. THE QUESTION BANKS ---
+        // --- 1. THE MASSIVE QUESTION BANKS ---
         
         const bankAppetizers = [
-            { type: 'question', mode: "THE GOSSIP COLUMNIST", prompt: "What is a secret rumor you heard about yourself?" },
-            { type: 'question', mode: "THE EXCITED DOG", prompt: "What makes you happiest right now?" },
-            { type: 'question', mode: "THE NEWS ANCHOR", prompt: "What was the headline of your worst day ever?" },
-            { type: 'question', mode: "THE GRANDMA", prompt: "What is a simple remedy for when you're feeling sad?" },
-            { type: 'question', mode: "THE DEFENSIVE LAWYER", prompt: "Why is your favorite food objectively the best?" },
-            { type: 'question', mode: "THE OLD SOUL", prompt: "What is something young people just don't understand?" },
-            { type: 'question', mode: "THE AWARD WINNER", prompt: "Who would you thank in your acceptance speech for 'Best Human'?" },
-            { type: 'question', mode: "THE COMIC", prompt: "What is the worst haircut you've ever had?" },
-            { type: 'question', mode: "THE SKEPTIC", prompt: "What is a popular belief you think is total nonsense?" },
-            { type: 'question', mode: "THE GHOST", prompt: "If you were invisible for a day, what would you do?" }
+            { prompt: "What is a rumor you heard about yourself?" },
+            { prompt: "What makes you happiest right now?" },
+            { prompt: "What was the headline of your worst day?" },
+            { prompt: "What is a simple remedy for sadness?" },
+            { prompt: "What is your most controversial opinion?" },
+            { prompt: "What is something young people don't get?" },
+            { prompt: "Who would you thank for 'Best Human'?" },
+            { prompt: "What is your weirdest talent?" },
+            { prompt: "What is a trend you want to die?" },
+            { prompt: "If you were invisible, what would you do?" },
+            { prompt: "What is the most boring thing about you?" },
+            { prompt: "What is your favorite weird food combo?" },
+            { prompt: "What is a song you are ashamed to love?" },
+            { prompt: "What is a movie everyone loves but you hate?" },
+            { prompt: "What is a childish habit you still have?" },
+            { prompt: "What is the worst advice you ever got?" },
+            { prompt: "What is your 'guilty pleasure' TV show?" },
+            { prompt: "If you were a color, what would you be?" },
+            { prompt: "What is the strangest dream you remember?" },
+            { prompt: "What is something you are too scared to try?" }
         ];
 
         const bankEntrees = [
-            { type: 'question', mode: "THE CONSPIRACY THEORIST", prompt: "What is a coincidence in your life that felt like a sign?" },
-            { type: 'question', mode: "THE CEO", prompt: "Pitch me your 5-year life plan in 10 seconds." },
-            { type: 'question', mode: "THE SAD CLOWN", prompt: "Tell me about a success that felt hollow." },
-            { type: 'question', mode: "THE PHILOSOPHER", prompt: "What is the meaning of 'enough'?" },
-            { type: 'question', mode: "THE DETECTIVE", prompt: "What is something you are suspicious of?" },
-            { type: 'question', mode: "THE TOUR GUIDE", prompt: "Show me your mental 'happy place' with your hands." },
-            { type: 'question', mode: "THE CYNIC", prompt: "What is a trend you wish would die?" },
-            { type: 'question', mode: "THE OPTIMIST", prompt: "What is a risk you are glad you took?" },
-            { type: 'question', mode: "THE REALIST", prompt: "What is a hard truth you learned recently?" },
-            { type: 'question', mode: "THE ARTIST", prompt: "If your life was a painting, what colors would it have?" }
+            { prompt: "What is a coincidence that felt like a sign?" },
+            { prompt: "Pitch your 5-year life plan in 10 seconds." },
+            { prompt: "Tell me about a success that felt hollow." },
+            { prompt: "What is the meaning of 'enough' to you?" },
+            { prompt: "What are you suspicious of?" },
+            { prompt: "Show me your mental 'happy place' with hands." },
+            { prompt: "What is the hardest breakup you had?" },
+            { prompt: "What is a risk you are glad you took?" },
+            { prompt: "What is a hard truth you learned recently?" },
+            { prompt: "If your life was a painting, colors?" },
+            { prompt: "What is something you gave up on?" },
+            { prompt: "What is your relationship with money?" },
+            { prompt: "What is a lie you are tired of telling?" },
+            { prompt: "What is a moment you felt truly free?" },
+            { prompt: "What is something you are too proud to ask help for?" },
+            { prompt: "What is a secret wish for your career?" },
+            { prompt: "What is the most annoying thing about your best friend?" },
+            { prompt: "What is a hobby you spent too much money on?" },
+            { prompt: "What is a conspiracy theory you believe?" }
         ];
 
         const bankMain = [
-            { type: 'question', mode: "THE CONFESSOR", prompt: "What is something you pretend to know, but don't?" },
-            { type: 'question', mode: "THE SAGE", prompt: "What is a lesson life keeps hitting you with?" },
-            { type: 'question', mode: "THE PESSIMIST", prompt: "What is the worst thing that could happen this year?" },
-            { type: 'question', mode: "THE WARRIOR", prompt: "What are you currently fighting a battle against?" },
-            { type: 'question', mode: "THE POET", prompt: "Describe a fear using only colors." },
-            { type: 'question', mode: "THE REALIST", prompt: "What is a truth you need to tell someone?" },
-            { type: 'question', mode: "THE GHOST", prompt: "If you could haunt someone from your past, who would it be?" },
-            { type: 'question', mode: "THE JUDGE", prompt: "What is the worst mistake you've made?" },
-            { type: 'question', mode: "THE SINNER", prompt: "What is your biggest guilty pleasure?" },
-            { type: 'question', mode: "THE WITNESS", prompt: "What is something you saw that changed you?" }
+            { prompt: "What is something you pretend to know but don't?" },
+            { prompt: "What is a lesson life keeps hitting you with?" },
+            { prompt: "What is the worst thing that could happen this year?" },
+            { prompt: "What are you fighting a battle against?" },
+            { prompt: "Describe a fear using only metaphors." },
+            { prompt: "What is a truth you need to tell someone?" },
+            { prompt: "If you could haunt someone, who would it be?" },
+            { prompt: "What is the biggest mistake you've made?" },
+            { prompt: "What is your biggest guilty pleasure?" },
+            { prompt: "What is something you saw that changed you?" },
+            { prompt: "What is a memory that still makes you cry?" },
+            { prompt: "What is the darkest thought you've had?" },
+            { prompt: "What is something you are jealous of?" },
+            { prompt: "What is a promise you broke to yourself?" },
+            { prompt: "What is the most selfish thing you've done?" },
+            { prompt: "What is something you hope your parents never find out?" },
+            { prompt: "What is a time you felt betrayed?" },
+            { prompt: "What is something you are too old for?" },
+            { prompt: "What is a fear you are getting over?" }
         ];
 
         const bankDessert = [
-            { type: 'question', mode: "THE ROMANTIC", prompt: "What is the love story of your life?" },
-            { type: 'question', mode: "THE GRATEFUL", prompt: "Who are the people you couldn't live without?" },
-            { type: 'question', mode: "THE CHILD", prompt: "What do you wish you could go back and tell your parents?" },
-            { type: 'question', mode: "THE STORYTELLER", prompt: "Tell me about the moment you fell in love with life." },
-            { type: 'question', mode: "THE OPTIMIST", prompt: "What are you excited to discover?" },
-            { type: 'question', mode: "THE DREAMER", prompt: "Where do you want to go when this is over?" },
-            { type: 'question', mode: "THE FRIEND", prompt: "What is a favor you'd do for me?" },
-            { type: 'question', mode: "THE TEACHER", prompt: "What is the most important lesson you learned this year?" },
-            { type: 'question', mode: "THE FAN", prompt: "What is a talent you wish you had?" },
-            { type: 'question', mode: "THE LOVER", prompt: "What is the kindest thing anyone has done for you?" }
+            { prompt: "What is the love story of your life?" },
+            { prompt: "Who are the people you couldn't live without?" },
+            { prompt: "What do you wish you could tell your parents?" },
+            { prompt: "Tell me about a moment you fell in love with life." },
+            { prompt: "What are you excited to discover?" },
+            { prompt: "Where do you want to go when this is over?" },
+            { prompt: "What is a favor you'd do for me?" },
+            { prompt: "What is the most important lesson this year?" },
+            { prompt: "What is a talent you wish you had?" },
+            { prompt: "What is the kindest thing anyone has done for you?" },
+            { prompt: "What is a moment you felt proud of someone?" },
+            { prompt: "What is something you want to be forgiven for?" },
+            { prompt: "What is a smell that makes you nostalgic?" },
+            { prompt: "What is a sound that comforts you?" },
+            { prompt: "What is a place you feel safe?" },
+            { prompt: "What is a word you want people to use for you?" },
+            { prompt: "What is a dream you want to come true?" },
+            { prompt: "What is something you want to keep forever?" }
         ];
 
+        // DYNAMIC & WEIRD CHALLENGES
+        // type 'break' = Standalone Weird Challenge
+        // type 'combo' = Constraint (Do this WHILE answering)
         const bankChallenges = [
-            { type: 'challenge', mode: "", prompt: "CHARADES: Act out 'The Awkward First Date'." },
-            { type: 'challenge', mode: "", prompt: "MIRROR: Mirror each other's facial expressions for 20 seconds." },
-            { type: 'challenge', mode: "", prompt: "STARE OFF: Don't laugh for 30 seconds." },
-            { type: 'challenge', mode: "", prompt: "ROCK PAPER SCISSORS: Winner asks loser one truth question." },
-            { type: 'challenge', mode: "", prompt: "HANDSHAKE: Invent a new secret handshake together." },
-            { type: 'challenge', mode: "", prompt: "TOUCH: Point to a body part, partner points to a different one." },
-            { type: 'challenge', mode: "", prompt: "EYES: Look into each other's eyes for 45 seconds without speaking." },
-            { type: 'challenge', mode: "", prompt: "VOICE: Say 'I am here' in your most honest voice." },
-            { type: 'challenge', mode: "", prompt: "SPACE: Get 1 inch closer to each other. Hold it." },
-            { type: 'challenge', mode: "", prompt: "HANDS: Trace your partner's palm for 10 seconds." },
-            { type: 'challenge', mode: "", prompt: "BOW: Take a deep breath, close your eyes, and bow to each other." },
-            { type: 'challenge', mode: "", prompt: "SILENCE: Sit in comfortable silence for 1 minute." }
+            { type: 'combo', prompt: "ANSWER WITH YOUR EYES CLOSED." },
+            { type: 'combo', prompt: "TALK IN YOUR SLOWEST DRAWL." },
+            { type: 'combo', prompt: "START EVERY SENTENCE WITH 'TECHNICALLY...'." },
+            { type: 'combo', prompt: "WHISPER THE ANSWER, THEN SHOUT THE LAST WORD." },
+            { type: 'combo', prompt: "SING YOUR ANSWER." },
+            { type: 'combo', prompt: "PRETEND YOU ARE CHEWING GUM." },
+            { type: 'combo', prompt: "ANSWER LIKE YOU ARE SELLING ME SOMETHING." },
+            { type: 'combo', prompt: "DO AN INTERPRETIVE DANCE AFTER YOU SPEAK." },
+            { type: 'combo', prompt: "TALK TO THE SPACE JUST ABOVE THEIR HEAD." },
+            { type: 'combo', prompt: "SPEAK ONLY IN QUESTIONS." },
+            { type: 'combo', prompt: "ANSWER LIKE YOU ARE CONFESSING TO A CRIME." },
+            { type: 'combo', prompt: "NARRATE YOUR OWN THOUGHT PROCESS OUT LOUD." },
+            { type: 'combo', prompt: "SPEAK ONLY IN VOWELS." },
+            { type: 'combo', prompt: "TALK LIKE YOU ARE AT A JOB INTERVIEW." },
+            { type: 'combo', prompt: "ANSWER LIKE YOU ARE A SAD CLOWN." },
+            { type: 'break', prompt: "THE SLOW MOTION FIGHT: Move in slow mo for 30s." },
+            { type: 'break', prompt: "THE NARRATOR: Narrate your blinking." },
+            { type: 'break', prompt: "THE ROBOT: Act like you have no joints." },
+            { type: 'break', prompt: "THE VENTRILOQUIST: Speak for the air next to you." },
+            { type: 'break', prompt: "THE PENGUIN: Walk around like a penguin." },
+            { type: 'break', prompt: "THE OPERA: Speak dramatically like in an opera." },
+            { type: 'break', prompt: "THE NEWS ANCHOR: Deliver your thoughts as breaking news." },
+            { type: 'break', prompt: "THE MIRROR: Do exactly what your partner does." },
+            { type: 'break', prompt: "THE HICCUP: Pretend you can't stop hiccuping." },
+            { type: 'break', prompt: "THE GHOST: Float around the room silently." },
+            { type: 'break', prompt: "THE STATUE: Freeze every time they say 'and'." }
         ];
 
-        // --- 2. DECK GENERATOR ---
-        
+        // --- 2. SHUFFLE ALGORITHM ---
         function shuffle(array) {
             let m = array.length, t, i;
             let result = array.slice(); 
@@ -297,37 +314,36 @@
             return result;
         }
 
+        // --- 3. GENERATE UNIQUE DECK (36 Cards) ---
         function generateGameDeck() {
             let deck = [];
             const takeRandom = (bank, count) => shuffle(bank).slice(0, count);
             const takeOne = (bank) => shuffle(bank)[0];
 
-            // PHASE 1: APPETIZERS (3 Questions + 1 Challenge)
-            deck.push(...takeRandom(bankAppetizers, 3));
+            // PHASE 1: APPETIZERS (9 Questions + 1 Challenge)
+            deck.push(...takeRandom(bankAppetizers, 9));
             deck.push({ ...takeOne(bankChallenges), phase: "APPETIZER" });
 
-            // PHASE 2: ENTREES (3 Questions + 1 Challenge)
-            deck.push(...takeRandom(bankEntrees, 3));
+            // PHASE 2: ENTREES (9 Questions + 1 Challenge)
+            deck.push(...takeRandom(bankEntrees, 9));
             deck.push({ ...takeOne(bankChallenges), phase: "ENTRÉE" });
 
-            // PHASE 3: MAIN COURSE (3 Questions + 1 Challenge)
-            deck.push(...takeRandom(bankMain, 3));
+            // PHASE 3: MAIN COURSE (9 Questions + 1 Challenge)
+            deck.push(...takeRandom(bankMain, 9));
             deck.push({ ...takeOne(bankChallenges), phase: "MAIN COURSE" });
 
-            // PHASE 4: DESSERT (3 Questions)
-            deck.push(...takeRandom(bankDessert, 3));
+            // PHASE 4: DESSERT (9 Questions)
+            deck.push(...takeRandom(bankDessert, 9));
 
             return deck;
         }
 
-        const archetypes = ["The Detective", "The Comedian", "The Stoic", "The Dramatic", "The Optimist", "The Pessimist"];
-
-        // --- 3. STATE ---
+        // --- 4. GAME STATE ---
         let currentDeck = [];
         let currentStep = 0;
 
-        // --- 4. GAME LOGIC ---
         function startGame() {
+            // Create a completely new, random instance
             currentDeck = generateGameDeck();
             currentStep = 0;
             
@@ -350,35 +366,29 @@
             document.getElementById('lobby').classList.remove('hidden');
         }
 
-        function openModal() {
-            document.getElementById('modal').classList.remove('hidden');
-        }
-
-        function closeModal() {
-            document.getElementById('modal').classList.add('hidden');
-        }
-
         // --- 5. UI UPDATES ---
         function updateUI(stepIndex) {
             const card = currentDeck[stepIndex];
+            const totalCards = currentDeck.length;
             
             // Determine phase
             let phase = card.phase;
             if (!phase) {
-                if (stepIndex < 4) phase = "APPETIZER";
-                else if (stepIndex < 8) phase = "ENTRÉE";
-                else if (stepIndex < 12) phase = "MAIN COURSE";
+                if (stepIndex < 10) phase = "APPETIZER";
+                else if (stepIndex < 20) phase = "ENTRÉE";
+                else if (stepIndex < 30) phase = "MAIN COURSE";
                 else phase = "DESSERT";
             }
 
             // Fade effect
             const gameCard = document.getElementById('game');
             gameCard.style.opacity = '0';
+            gameCard.style.transform = 'translateY(10px)';
             
             setTimeout(() => {
-                document.getElementById('step-counter').innerText = `${stepIndex + 1} / ${currentDeck.length}`;
+                document.getElementById('step-counter').innerText = `${stepIndex + 1} / ${totalCards}`;
                 
-                // Phase Color
+                // Update Phase Color
                 const phaseEl = document.getElementById('phase-indicator');
                 phaseEl.innerText = phase;
                 phaseEl.className = 'phase-tag';
@@ -387,39 +397,53 @@
                 else if (phase === "MAIN COURSE") phaseEl.classList.add('phase-main');
                 else phaseEl.classList.add('phase-dessert');
 
-                // Layout
-                const modeBox = document.getElementById('mode-box');
+                // Update Progress
+                const progress = ((stepIndex + 1) / totalCards) * 100;
+                document.getElementById('progress-bar').style.width = `${progress}%`;
+
+                // Handle Layout
                 const challengeBox = document.getElementById('challenge-box');
                 const questionText = document.getElementById('question-text');
                 const nextBtn = document.getElementById('next-btn');
 
-                if (card.type === 'challenge') {
-                    modeBox.classList.add('hidden');
-                    questionText.classList.add('hidden');
+                // RESET CLASSES
+                challengeBox.className = 'challenge-box hidden';
+                
+                if (card.type === 'break') {
+                    // PURE WEIRD CHALLENGE
                     challengeBox.classList.remove('hidden');
                     challengeBox.innerText = card.prompt;
+                    questionText.classList.add('hidden');
                     nextBtn.innerText = "Done";
+                } else if (card.type === 'combo') {
+                    // COMBO CONSTRAINT (Show constraint + a random question)
+                    challengeBox.classList.remove('hidden');
+                    challengeBox.classList.add('combo-mode');
+                    challengeBox.innerText = `CONSTRAINT: ${card.prompt}`;
+                    
+                    // Dynamically pair with a random question from the current phase
+                    let currentBank = [];
+                    if(phase === "APPETIZER") currentBank = bankAppetizers;
+                    else if(phase === "ENTRÉE") currentBank = bankEntrees;
+                    else if(phase === "MAIN COURSE") currentBank = bankMain;
+                    else currentBank = bankDessert;
+
+                    const randomQ = shuffle(currentBank)[0];
+                    questionText.innerText = randomQ.prompt;
+                    questionText.classList.remove('hidden');
+                    nextBtn.innerText = "Next Step";
                 } else {
+                    // NORMAL QUESTION
                     challengeBox.classList.add('hidden');
                     questionText.classList.remove('hidden');
-                    modeBox.classList.remove('hidden');
-                    modeBox.innerText = `MODE: ${card.mode}`;
                     questionText.innerText = card.prompt;
-                    nextBtn.innerText = "Next Turn";
+                    nextBtn.innerText = "Next Step";
                 }
 
-                // Reset Archetype
-                document.getElementById('archetype-display').classList.add('hidden'); 
-                
+                // Fade In
                 gameCard.style.opacity = '1';
+                gameCard.style.transform = 'translateY(0)';
             }, 300);
-        }
-
-        function rollArchetype() {
-            const randomArchetype = archetypes[Math.floor(Math.random() * archetypes.length)];
-            const display = document.getElementById('archetype-display');
-            display.innerText = `PERSONA: ${randomArchetype.toUpperCase()}`;
-            display.classList.remove('hidden');
         }
     </script>
 </body>
