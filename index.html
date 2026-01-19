@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>COURSES: Synced</title>
+    <title>COURSES: The Synced Edition</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         body {
@@ -159,10 +159,6 @@
         }
         .copy-btn:hover { background: #444; }
 
-        /* Connection Status */
-        #connection-status { color: #ff5555; font-weight: bold; font-size: 0.8rem; margin-top: 10px;}
-        .connected { color: #00ff00 !important; }
-
         /* Modal */
         .modal-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
@@ -234,7 +230,7 @@
     <!-- SCREEN 2: GAMEPLAY -->
     <div id="game" class="card hidden">
         <div style="display: flex; justify-content: space-between; align-items: center; color: #666; font-size: 0.8rem; font-family: monospace;">
-            <span id="step-counter">1 / 60</span>
+            <span id="step-counter">1 / 16</span>
             <span>SYNC: <span id="status-dot" style="color:red">●</span></span>
         </div>
 
@@ -248,7 +244,7 @@
         <!-- CHALLENGE BOX (Hidden by default) -->
         <div id="challenge-box" class="challenge-box hidden">CHARADES: ACT OUT "THE AWKWARD FIRST DATE"</div>
         
-        <h2 class="scenario-text" id="question-text">What is the most overrated food trend?</h2>
+        <h2 class="scenario-text" id="question-text">What is most overrated food trend?</h2>
 
         <button id="next-btn" onclick="nextStep()">Next</button>
         <button class="secondary hidden" id="skip-btn" onclick="returnToHome()">End Session</button>
@@ -256,88 +252,123 @@
     </div>
 
     <script>
-        // --- 1. THE DATA (Mixed Questions & Challenges) ---
+        // --- 1. THE QUESTION BANKS (Source of Truth) ---
         
-        const baseCards = [
-            // APPETIZERS (Light, Fun Modes & Charades)
-            { type: 'question', phase: "APPETIZER", mode: "THE GOSSIP COLUMNIST", prompt: "What is a secret rumor you heard about yourself?" },
-            { type: 'challenge', phase: "APPETIZER", mode: "", prompt: "CHARADES: Act out 'The Awkward First Date'." },
-            { type: 'question', phase: "APPETIZER", mode: "THE NEWS ANCHOR", prompt: "What was the headline of your worst day ever?" },
-            { type: 'question', phase: "APPETIZER", mode: "THE AWARD WINNER", prompt: "Who would you thank in your acceptance speech for 'Best Human'?" },
-            { type: 'challenge', phase: "APPETIZER", mode: "", prompt: "MIRROR: Mirror each other's facial expressions for 20 seconds." },
-            { type: 'question', phase: "APPETIZER", mode: "THE DEFENSIVE LAWYER", prompt: "Why is your favorite food objectively the best?" },
-            { type: 'question', phase: "APPETIZER", mode: "THE OLD SOUL", prompt: "What is something young people don't understand?" },
-            { type: 'challenge', phase: "APPETIZER", mode: "", prompt: "STARE OFF: Don't laugh for 30 seconds." },
-            { type: 'question', phase: "APPETIZER", mode: "THE EXCITED DOG", prompt: "What makes you happiest right now?" },
-            { type: 'question', phase: "APPETIZER", mode: "THE GRANDMA", prompt: "What is a simple remedy for when you're feeling sad?" },
-
-            // ENTREES (Medium Depth, Physical Challenges)
-            { type: 'question', phase: "ENTRÉE", mode: "THE CONSPIRACY THEORIST", prompt: "What is a coincidence in your life that felt like a sign?" },
-            { type: 'challenge', phase: "ENTRÉE", mode: "", prompt: "ROCK PAPER SCISSORS: Winner asks loser one truth question." },
-            { type: 'question', phase: "ENTRÉE", mode: "THE CEO", prompt: "Pitch me your 5-year life plan in 10 seconds." },
-            { type: 'question', phase: "ENTRÉE", mode: "THE SAD CLOWN", prompt: "Tell me about a success that felt hollow." },
-            { type: 'challenge', phase: "ENTRÉE", mode: "", prompt: "HANDSHAKE: Invent a new secret handshake together." },
-            { type: 'question', phase: "ENTRÉE", mode: "THE DETECTIVE", prompt: "What is something you are suspicious of?" },
-            { type: 'question', phase: "ENTRÉE", mode: "THE PHILOSOPHER", prompt: "What is the meaning of 'enough'?" },
-            { type: 'challenge', phase: "ENTRÉE", mode: "", prompt: "TOUCH: Point to a body part, partner points to a different one." },
-            { type: 'question', phase: "ENTRÉE", mode: "THE TOUR GUIDE", prompt: "Show me your mental 'happy place' with your hands." },
-            { type: 'question', phase: "ENTRÉE", mode: "THE CYNIC", prompt: "What is a trend you wish would die?" },
-
-            // MAIN COURSES (Deep, Vulnerable, Raw Challenges)
-            { type: 'question', phase: "MAIN COURSE", mode: "THE GHOST", prompt: "If you could haunt someone from your past, who would it be?" },
-            { type: 'challenge', phase: "MAIN COURSE", mode: "", prompt: "EYES: Look into each other's eyes for 45 seconds without speaking." },
-            { type: 'question', phase: "MAIN COURSE", mode: "THE CONFESSOR", prompt: "What is something you pretend to know, but don't?" },
-            { type: 'question', phase: "MAIN COURSE", mode: "THE SAGE", prompt: "What is a lesson life keeps hitting you with?" },
-            { type: 'challenge', phase: "MAIN COURSE", mode: "", prompt: "VOICE: Say 'I am here' in your most honest voice." },
-            { type: 'question', phase: "MAIN COURSE", mode: "THE PESSIMIST", prompt: "What is the worst thing that could happen this year?" },
-            { type: 'question', phase: "MAIN COURSE", mode: "THE WARRIOR", prompt: "What are you currently fighting a battle against?" },
-            { type: 'challenge', phase: "MAIN COURSE", mode: "", prompt: "SPACE: Get 1 inch closer to each other. Hold it." },
-            { type: 'question', phase: "MAIN COURSE", mode: "THE POET", prompt: "Describe a fear using only colors." },
-            { type: 'question', phase: "MAIN COURSE", mode: "THE REALIST", prompt: "What is a truth you need to tell someone?" },
-
-            // DESSERTS (Sweet, Soft, Closing)
-            { type: 'question', phase: "DESSERT", mode: "THE ROMANTIC", prompt: "What is the love story of your life?" },
-            { type: 'challenge', phase: "DESSERT", mode: "", prompt: "HANDS: Trace your partner's palm for 10 seconds." },
-            { type: 'question', phase: "DESSERT", mode: "THE GRATEFUL", prompt: "Who are the people you couldn't live without?" },
-            { type: 'question', phase: "DESSERT", mode: "THE CHILD", prompt: "What do you wish you could go back and tell your parents?" },
-            { type: 'challenge', phase: "DESSERT", mode: "", prompt: "BOW: Take a deep breath, close your eyes, and bow to each other." },
-            { type: 'question', phase: "DESSERT", mode: "THE STORYTELLER", prompt: "Tell me about the moment you fell in love with life." },
-            { type: 'question', phase: "DESSERT", mode: "THE OPTIMIST", prompt: "What are you excited to discover?" },
-            { type: 'challenge', phase: "DESSERT", mode: "", prompt: "SILENCE: Sit in comfortable silence for 1 minute." },
-            { type: 'question', phase: "DESSERT", mode: "THE DREAMER", prompt: "Where do you want to go when this is over?" },
-            { type: 'question', phase: "DESSERT", mode: "THE FRIEND", prompt: "What is a favor you'd do for me?" }
+        const bankAppetizers = [
+            { type: 'question', mode: "THE GOSSIP COLUMNIST", prompt: "What is a secret rumor you heard about yourself?" },
+            { type: 'question', mode: "THE EXCITED DOG", prompt: "What makes you happiest right now?" },
+            { type: 'question', mode: "THE NEWS ANCHOR", prompt: "What was the headline of your worst day ever?" },
+            { type: 'question', mode: "THE GRANDMA", prompt: "What is a simple remedy for when you're feeling sad?" },
+            { type: 'question', mode: "THE DEFENSIVE LAWYER", prompt: "Why is your favorite food objectively the best?" },
+            { type: 'question', mode: "THE OLD SOUL", prompt: "What is something young people just don't understand?" },
+            { type: 'question', mode: "THE AWARD WINNER", prompt: "Who would you thank in your acceptance speech for 'Best Human'?" },
+            { type: 'question', mode: "THE COMIC", prompt: "What is the worst haircut you've ever had?" },
+            { type: 'question', mode: "THE SKEPTIC", prompt: "What is a popular belief you think is total nonsense?" },
+            { type: 'question', mode: "THE GHOST", prompt: "If you were invisible for a day, what would you do?" }
         ];
+
+        const bankEntrees = [
+            { type: 'question', mode: "THE CONSPIRACY THEORIST", prompt: "What is a coincidence in your life that felt like a sign?" },
+            { type: 'question', mode: "THE CEO", prompt: "Pitch me your 5-year life plan in 10 seconds." },
+            { type: 'question', mode: "THE SAD CLOWN", prompt: "Tell me about a success that felt hollow." },
+            { type: 'question', mode: "THE PHILOSOPHER", prompt: "What is the meaning of 'enough'?" },
+            { type: 'question', mode: "THE DETECTIVE", prompt: "What is something you are suspicious of?" },
+            { type: 'question', mode: "THE TOUR GUIDE", prompt: "Show me your mental 'happy place' with your hands." },
+            { type: 'question', mode: "THE CYNIC", prompt: "What is a trend you wish would die?" },
+            { type: 'question', mode: "THE OPTIMIST", prompt: "What is a risk you are glad you took?" },
+            { type: 'question', mode: "THE REALIST", prompt: "What is a hard truth you learned recently?" },
+            { type: 'question', mode: "THE ARTIST", prompt: "If your life was a painting, what colors would it have?" }
+        ];
+
+        const bankMain = [
+            { type: 'question', mode: "THE CONFESSOR", prompt: "What is something you pretend to know, but don't?" },
+            { type: 'question', mode: "THE SAGE", prompt: "What is a lesson life keeps hitting you with?" },
+            { type: 'question', mode: "THE PESSIMIST", prompt: "What is the worst thing that could happen this year?" },
+            { type: 'question', mode: "THE WARRIOR", prompt: "What are you currently fighting a battle against?" },
+            { type: 'question', mode: "THE POET", prompt: "Describe a fear using only colors." },
+            { type: 'question', mode: "THE REALIST", prompt: "What is a truth you need to tell someone?" },
+            { type: 'question', mode: "THE GHOST", prompt: "If you could haunt someone from your past, who would it be?" },
+            { type: 'question', mode: "THE JUDGE", prompt: "What is the worst mistake you've made?" },
+            { type: 'question', mode: "THE SINNER", prompt: "What is your biggest guilty pleasure?" },
+            { type: 'question', mode: "THE WITNESS", prompt: "What is something you saw that changed you?" }
+        ];
+
+        const bankDessert = [
+            { type: 'question', mode: "THE ROMANTIC", prompt: "What is the love story of your life?" },
+            { type: 'question', mode: "THE GRATEFUL", prompt: "Who are the people you couldn't live without?" },
+            { type: 'question', mode: "THE CHILD", prompt: "What do you wish you could go back and tell your parents?" },
+            { type: 'question', mode: "THE STORYTELLER", prompt: "Tell me about the moment you fell in love with life." },
+            { type: 'question', mode: "THE OPTIMIST", prompt: "What are you excited to discover?" },
+            { type: 'question', mode: "THE DREAMER", prompt: "Where do you want to go when this is over?" },
+            { type: 'question', mode: "THE FRIEND", prompt: "What is a favor you'd do for me?" },
+            { type: 'question', mode: "THE TEACHER", prompt: "What is the most important lesson you learned this year?" },
+            { type: 'question', mode: "THE FAN", prompt: "What is a talent you wish you had?" },
+            { type: 'question', mode: "THE LOVER", prompt: "What is the kindest thing anyone has done for you?" }
+        ];
+
+        const bankChallenges = [
+            { type: 'challenge', mode: "", prompt: "CHARADES: Act out 'The Awkward First Date'." },
+            { type: 'challenge', mode: "", prompt: "MIRROR: Mirror each other's facial expressions for 20 seconds." },
+            { type: 'challenge', mode: "", prompt: "STARE OFF: Don't laugh for 30 seconds." },
+            { type: 'challenge', mode: "", prompt: "ROCK PAPER SCISSORS: Winner asks loser one truth question." },
+            { type: 'challenge', mode: "", prompt: "HANDSHAKE: Invent a new secret handshake together." },
+            { type: 'challenge', mode: "", prompt: "TOUCH: Point to a body part, partner points to a different one." },
+            { type: 'challenge', mode: "", prompt: "EYES: Look into each other's eyes for 45 seconds without speaking." },
+            { type: 'challenge', mode: "", prompt: "VOICE: Say 'I am here' in your most honest voice." },
+            { type: 'challenge', mode: "", prompt: "SPACE: Get 1 inch closer to each other. Hold it." },
+            { type: 'challenge', mode: "", prompt: "HANDS: Trace your partner's palm for 10 seconds." },
+            { type: 'challenge', mode: "", prompt: "BOW: Take a deep breath, close your eyes, and bow to each other." },
+            { type: 'challenge', mode: "", prompt: "SILENCE: Sit in comfortable silence for 1 minute." }
+        ];
+
+        // --- 2. DECK GENERATOR (Linear Progression + Uniqueness) ---
+        
+        function shuffle(array) {
+            let m = array.length, t, i;
+            let result = array.slice(); // Copy array
+            while (m) {
+                i = Math.floor(Math.random() * m--);
+                t = result[m];
+                result[m] = result[i];
+                result[i] = t;
+            }
+            return result;
+        }
+
+        function generateGameDeck() {
+            let deck = [];
+            
+            // Helper to get random items
+            const takeRandom = (bank, count) => shuffle(bank).slice(0, count);
+            const takeOne = (bank) => shuffle(bank)[0];
+
+            // PHASE 1: APPETIZERS (3 Questions + 1 Challenge)
+            deck.push(...takeRandom(bankAppetizers, 3));
+            deck.push({ ...takeOne(bankChallenges), phase: "APPETIZER" }); // Add phase tag to challenge
+
+            // PHASE 2: ENTREES (3 Questions + 1 Challenge)
+            deck.push(...takeRandom(bankEntrees, 3));
+            deck.push({ ...takeOne(bankChallenges), phase: "ENTRÉE" });
+
+            // PHASE 3: MAIN COURSE (3 Questions + 1 Challenge)
+            deck.push(...takeRandom(bankMain, 3));
+            deck.push({ ...takeOne(bankChallenges), phase: "MAIN COURSE" });
+
+            // PHASE 4: DESSERT (3 Questions)
+            deck.push(...takeRandom(bankDessert, 3));
+
+            return deck;
+        }
 
         const archetypes = ["The Detective", "The Comedian", "The Stoic", "The Dramatic", "The Optimist", "The Pessimist"];
 
-        // --- 2. PEERJS & SYNC SETUP ---
+        // --- 3. PEERJS & SYNC SETUP ---
         let peer;
         let conn;
         let currentStep = 0;
         let isHost = false;
-        let gameSeed = 0;
-        let shuffledDeck = [];
+        let currentDeck = [];
         let isSyncing = false;
-
-        function seededRandom(seed) {
-            var x = Math.sin(seed++) * 10000;
-            return x - Math.floor(x);
-        }
-
-        function shuffle(array, seed) {
-            let m = array.length, t, i;
-            let randomSeed = seed;
-            let result = array.slice(); // Copy array
-
-            while (m) {
-                i = Math.floor(seededRandom(randomSeed) * m--);
-                t = result[m];
-                result[m] = result[i];
-                result[i] = t;
-                randomSeed++; 
-            }
-            return result;
-        }
 
         function initPeer() {
             peer = new Peer(null, { debug: 2 });
@@ -347,7 +378,6 @@
                 document.getElementById('id-display').classList.remove('hidden');
                 document.getElementById('my-peer-id').innerText = id;
                 
-                // If we are host, we are waiting
                 if(isHost) {
                     document.getElementById('connection-status').innerText = "Waiting for player...";
                 }
@@ -359,7 +389,7 @@
             });
         }
 
-        // --- 3. HOST LOGIC ---
+        // --- 4. HOST LOGIC ---
         function hostGame() {
             if(conn && conn.open) return alert("You already have a connected player!");
             
@@ -369,31 +399,30 @@
             
             peer.on('connection', (c) => {
                 if(conn && conn.open) {
-                    c.close(); // Reject extra connections (1 Host = 1 Player)
+                    c.close(); // Reject extra connections
                     return;
                 }
                 
                 conn = c;
                 setupDataHandlers();
                 
-                // Host generates seed
-                gameSeed = Math.floor(Math.random() * 999999);
+                // Host generates the deck
+                currentDeck = generateGameDeck();
                 
-                // Send seed to client immediately
+                // Send the WHOLE deck to joiner to ensure perfect sync
                 if(conn && conn.open) {
-                    conn.send({ type: 'INIT', seed: gameSeed });
+                    conn.send({ type: 'START', deck: currentDeck });
                 }
 
                 document.getElementById('connection-status').innerText = "Connected";
                 document.getElementById('connection-status').classList.add('connected');
 
-                setTimeout(() => {
-                    startGame();
-                }, 500);
+                // Host starts immediately
+                startGame();
             });
         }
 
-        // --- 4. JOIN LOGIC ---
+        // --- 5. JOIN LOGIC ---
         function joinGame() {
             const partnerId = document.getElementById('partner-id').value;
             if(!partnerId) return alert("Enter an ID");
@@ -404,7 +433,7 @@
                 conn = peer.connect(partnerId);
                 conn.on('open', () => {
                     setupDataHandlers();
-                    // Joiner waits for seed from Host before starting
+                    // Joiner waits for 'START' message with the deck
                     document.getElementById('connection-status').innerText = "Syncing...";
                 });
                 
@@ -415,22 +444,23 @@
             });
         }
 
-        // --- 5. DATA HANDLERS ---
+        // --- 6. DATA HANDLERS ---
         function setupDataHandlers() {
             conn.on('data', (data) => {
-                if (data.type === 'INIT') {
-                    // Client received seed, shuffle deck
-                    gameSeed = data.seed;
+                if (data.type === 'START') {
+                    // Joiner receives the deck
+                    currentDeck = data.deck;
+                    
                     document.getElementById('connection-status').innerText = "Connected";
                     document.getElementById('connection-status').classList.add('connected');
+                    
+                    // Start the game UI
                     startGame();
                 } else if (data.step !== undefined) {
                     if (data.step === -1) {
-                        // Game Over Signal
                         returnToHome();
                     } else {
-                        // Sync Logic: FORCE UPDATE to match peer
-                        // This ensures that if Peer A clicks 'Next', Peer B is dragged along.
+                        // Sync Logic
                         updateUI(data.step);
                         isSyncing = false; 
                         document.getElementById('next-btn').disabled = false;
@@ -450,11 +480,10 @@
         }
 
         function startGame() {
-            // Both players shuffle using the same seed
-            shuffledDeck = shuffle(baseCards, gameSeed);
-            
+            // Explicitly ensure screens swap
             document.getElementById('lobby').classList.add('hidden');
             document.getElementById('game').classList.remove('hidden');
+            
             currentStep = 0;
             updateUI(0);
         }
@@ -462,22 +491,22 @@
         function nextStep() {
             if(isSyncing) return; 
 
-            if (currentStep < shuffledDeck.length - 1) {
+            if (currentStep < currentDeck.length - 1) {
                 currentStep++;
                 
-                // UI Feedback: Disable button to prevent spam
+                // Lock button
                 isSyncing = true;
                 document.getElementById('next-btn').disabled = true;
                 
-                // Update Local Immediately
+                // Update Local
                 updateUI(currentStep);
                 
-                // Send to Partner
+                // Send step to partner
                 if(conn && conn.open) {
                     conn.send({ step: currentStep });
                 }
             } else {
-                // --- END OF GAME LOOP ---
+                // End Game
                 if(conn && conn.open) {
                     conn.send({ step: -1 });
                 }
@@ -513,25 +542,35 @@
             document.getElementById('modal').classList.add('hidden');
         }
 
-        // --- 6. UI UPDATES ---
+        // --- 7. UI UPDATES ---
         function updateUI(stepIndex) {
             currentStep = stepIndex;
-            const card = shuffledDeck[stepIndex];
+            const card = currentDeck[stepIndex];
+            
+            // Determine phase based on index for questions without explicit phase
+            // (Challenges in deck have phase property injected)
+            let phase = card.phase;
+            if (!phase) {
+                if (stepIndex < 4) phase = "APPETIZER";
+                else if (stepIndex < 8) phase = "ENTRÉE";
+                else if (stepIndex < 12) phase = "MAIN COURSE";
+                else phase = "DESSERT";
+            }
             
             // Fade effect
             const gameCard = document.getElementById('game');
             gameCard.style.opacity = '0';
             
             setTimeout(() => {
-                document.getElementById('step-counter').innerText = `${stepIndex + 1} / ${shuffledDeck.length}`;
+                document.getElementById('step-counter').innerText = `${stepIndex + 1} / ${currentDeck.length}`;
                 
                 // Handle Phase Color
                 const phaseEl = document.getElementById('phase-indicator');
-                phaseEl.innerText = card.phase;
+                phaseEl.innerText = phase;
                 phaseEl.className = 'phase-tag';
-                if (card.phase === "APPETIZER") phaseEl.classList.add('phase-appetizer');
-                else if (card.phase === "ENTRÉE") phaseEl.classList.add('phase-entree');
-                else if (card.phase === "MAIN COURSE") phaseEl.classList.add('phase-main');
+                if (phase === "APPETIZER") phaseEl.classList.add('phase-appetizer');
+                else if (phase === "ENTRÉE") phaseEl.classList.add('phase-entree');
+                else if (phase === "MAIN COURSE") phaseEl.classList.add('phase-main');
                 else phaseEl.classList.add('phase-dessert');
 
                 // Handle Layout based on Type
@@ -545,7 +584,7 @@
                     modeBox.classList.add('hidden');
                     questionText.classList.add('hidden');
                     challengeBox.classList.remove('hidden');
-                    challengeBox.innerText = card.prompt; // Challenge acts as prompt here
+                    challengeBox.innerText = card.prompt;
                     nextBtn.innerText = "Done";
                 } else {
                     // QUESTION VIEW
