@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>COURSES: The Menu</title>
+    <title>COURSES: The Raw Edition</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         body {
             font-family: 'Helvetica Neue', sans-serif;
-            background-color: #0f0f0f;
+            background-color: #0d0d0d;
             color: #f0f0f0;
             display: flex;
             flex-direction: column;
@@ -25,12 +25,12 @@
         .hidden { display: none !important; }
         
         .card {
-            background: #1a1a1a;
+            background: #161616;
             padding: 40px 30px;
             border-radius: 16px;
-            max-width: 520px;
+            max-width: 550px;
             width: 100%;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.7);
             border: 1px solid #333;
             transition: all 0.3s ease;
             position: relative;
@@ -44,13 +44,13 @@
             font-size: 1rem;
             border-radius: 50px;
             cursor: pointer;
-            margin-top: 20px;
+            margin-top: 25px;
             transition: transform 0.2s, background 0.2s;
             width: 100%;
             font-weight: 600;
         }
         button:active { transform: scale(0.96); }
-        button:hover { background: #e60073; }
+        button:disabled { background: #444; cursor: not-allowed; }
         
         button.secondary {
             background: transparent;
@@ -82,10 +82,8 @@
             font-size: 1.2rem;
         }
         
-        .scenario-text { font-size: 1.5rem; line-height: 1.6; margin: 25px 0; font-weight: 500; min-height: 80px; display: flex; align-items: center; justify-content: center; text-shadow: 0 2px 4px rgba(0,0,0,0.5);}
-        
-        /* The Constraint Box */
-        .constraint-box {
+        /* The Mode Box */
+        .mode-box {
             font-family: 'Courier New', monospace;
             text-transform: uppercase;
             font-weight: bold;
@@ -93,14 +91,35 @@
             color: #00d2ff;
             border: 1px solid #00d2ff;
             background: rgba(0, 210, 255, 0.05);
-            padding: 10px 15px;
+            padding: 12px 15px;
             border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 0.9rem;
+            margin-bottom: 25px;
+            font-size: 0.95rem;
             display: flex;
             align-items: center;
             justify-content: center;
+            line-height: 1.4;
         }
+
+        /* The Challenge Box */
+        .challenge-box {
+            color: #ffaa00;
+            border: 2px solid #ffaa00;
+            background: rgba(255, 170, 0, 0.05);
+            padding: 30px 20px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-transform: uppercase;
+            line-height: 1.3;
+            box-shadow: 0 0 20px rgba(255, 170, 0, 0.1);
+        }
+
+        .scenario-text { font-size: 1.5rem; line-height: 1.6; margin: 25px 0; font-weight: 500; min-height: 80px; display: flex; align-items: center; justify-content: center; text-shadow: 0 2px 4px rgba(0,0,0,0.5);}
         
         .archetype { 
             color: #ff007f; 
@@ -184,7 +203,7 @@
     <!-- SCREEN 1: LOBBY -->
     <div id="lobby" class="card">
         <h1>Courses</h1>
-        <div class="subtitle">Connection through Improv.</div>
+        <div class="subtitle">Connection through Chaos.</div>
         
         <div id="host-section">
             <button onclick="hostGame()">Host Game</button>
@@ -210,7 +229,7 @@
     <!-- SCREEN 2: GAMEPLAY -->
     <div id="game" class="card hidden">
         <div style="display: flex; justify-content: space-between; align-items: center; color: #666; font-size: 0.8rem; font-family: monospace;">
-            <span id="step-counter">1 / 50</span>
+            <span id="step-counter">1 / 60</span>
             <span>SYNC: <span id="status-dot" style="color:red">●</span></span>
         </div>
 
@@ -218,68 +237,70 @@
 
         <div id="archetype-display" class="archetype hidden">ARCHETYPE: THE DETECTIVE</div>
 
-        <!-- NEW: The Constraint Box (Replaces Context) -->
-        <div class="constraint-box" id="constraint-text">CONSTRAINT: ANSWER IN 3 WORDS</div>
+        <!-- MODE BOX (For Questions) -->
+        <div id="mode-box" class="mode-box">MODE: THE GOSSIP COLUMNIST</div>
+
+        <!-- CHALLENGE BOX (Hidden by default) -->
+        <div id="challenge-box" class="challenge-box hidden">CHARADES: ACT OUT "THE AWKWARD FIRST DATE"</div>
         
         <h2 class="scenario-text" id="question-text">What is the most overrated food trend?</h2>
 
-        <div style="display: flex; flex-direction: column; gap: 10px;">
-            <button onclick="nextStep()">Next Course</button>
-            <button class="secondary" onclick="rollArchetype()">Roll Persona Shield</button>
-        </div>
+        <button id="next-btn" onclick="nextStep()">Next</button>
+        <button class="secondary hidden" id="skip-btn" onclick="returnToHome()">End Session</button>
+        <button class="secondary" onclick="rollArchetype()">Roll Persona</button>
     </div>
 
     <script>
-        // --- 1. THE DATA (50 Questions with Constraints) ---
+        // --- 1. THE DATA (Mixed Questions & Challenges) ---
         
-        const baseQuestions = [
-            // APPETIZERS (Fun, light constraints)
-            { phase: "APPETIZER", constraint: "Answer in exactly 3 words.", prompt: "What is a food combination you love that others find weird?" },
-            { phase: "APPETIZER", constraint: "Sing your answer.", prompt: "What is a song you know every single word to?" },
-            { phase: "APPETIZER", constraint: "Lie for 10 seconds, then tell the truth.", prompt: "If you were a fictional character, who would you be?" },
-            { phase: "APPETIZER", constraint: "Be incredibly vague.", prompt: "What is a useless skill you have?" },
-            { phase: "APPETIZER", constraint: "Make up a backstory for it.", prompt: "What was your first concert?" },
-            { phase: "APPETIZER", constraint: "Describe it with your hands (mime).", prompt: "What is the most boring job you have ever had?" },
-            { phase: "APPETIZER", constraint: "Do not say the letter 'E'.", prompt: "What is a movie everyone loves but you hated?" },
-            { phase: "APPETIZER", constraint: "Argue against your own preference.", prompt: "Who would you love to have dinner with?" },
-            { phase: "APPETIZER", constraint: "Whisper your answer.", prompt: "What is a TV show you have watched 5+ times?" },
-            { phase: "APPETIZER", constraint: "Imitate a celebrity while answering.", prompt: "What is the most overrated food trend?" },
+        const baseCards = [
+            // APPETIZERS (Light, Fun Modes & Charades)
+            { type: 'question', phase: "APPETIZER", mode: "THE GOSSIP COLUMNIST", prompt: "What is a secret rumor you heard about yourself?" },
+            { type: 'challenge', phase: "APPETIZER", mode: "", prompt: "CHARADES: Act out 'The Awkward First Date'." },
+            { type: 'question', phase: "APPETIZER", mode: "THE NEWS ANCHOR", prompt: "What was the headline of your worst day ever?" },
+            { type: 'question', phase: "APPETIZER", mode: "THE AWARD WINNER", prompt: "Who would you thank in your acceptance speech for 'Best Human'?" },
+            { type: 'challenge', phase: "APPETIZER", mode: "", prompt: "MIRROR: Mirror each other's facial expressions for 20 seconds." },
+            { type: 'question', phase: "APPETIZER", mode: "THE DEFENSIVE LAWYER", prompt: "Why is your favorite food objectively the best?" },
+            { type: 'question', phase: "APPETIZER", mode: "THE OLD SOUL", prompt: "What is something young people don't understand?" },
+            { type: 'challenge', phase: "APPETIZER", mode: "", prompt: "STARE OFF: Don't laugh for 30 seconds." },
+            { type: 'question', phase: "APPETIZER", mode: "THE EXCITED DOG", prompt: "What makes you the happiest right now?" },
+            { type: 'question', phase: "APPETIZER", mode: "THE GRANDMA", prompt: "What is a simple remedy for when you're feeling sad?" },
 
-            // ENTREES (Going deeper, slightly more serious constraints)
-            { phase: "ENTRÉE", constraint: "Don't look at your partner while answering.", prompt: "What is a misconception people often have about you?" },
-            { phase: "ENTRÉE", constraint: "Pause for 5 seconds before speaking.", prompt: "What is something you've changed your mind about recently?" },
-            { phase: "ENTRÉE", constraint: "Use a metaphor.", prompt: "What is a piece of advice you'd give your younger self?" },
-            { phase: "ENTRÉE", constraint: "Speak in a monotone voice.", prompt: "What is something you are procrastinating on?" },
-            { phase: "ENTRÉE", constraint: "Describe the risk, not the result.", prompt: "What is a risk you took that you don't regret?" },
-            { phase: "ENTRÉE", constraint: "Count to 3 between every word.", prompt: "What do you want to achieve in the next 5 years?" },
-            { phase: "ENTRÉE", constraint: "Make it sound like a bad thing.", prompt: "What is a habit you are trying to break?" },
-            { phase: "ENTRÉE", constraint: "Describe a specific physical sensation.", prompt: "What is the best thing that happened this week?" },
-            { phase: "ENTRÉE", constraint: "Talk fast, as if in a hurry.", prompt: "What is a hobby you spent too much money on?" },
-            { phase: "ENTRÉE", constraint: "Answer 'I learned...' (The Stoic Way).", prompt: "What is something you learned the hard way?" },
+            // ENTREES (Medium Depth, Physical Challenges)
+            { type: 'question', phase: "ENTRÉE", mode: "THE CONSPIRACY THEORIST", prompt: "What is a coincidence in your life that felt like a sign?" },
+            { type: 'challenge', phase: "ENTRÉE", mode: "", prompt: "ROCK PAPER SCISSORS: Winner asks loser one truth question." },
+            { type: 'question', phase: "ENTRÉE", mode: "THE CEO", prompt: "Pitch me your 5-year life plan in 10 seconds." },
+            { type: 'question', phase: "ENTRÉE", mode: "THE SAD CLOWN", prompt: "Tell me about a success that felt hollow." },
+            { type: 'challenge', phase: "ENTRÉE", mode: "", prompt: "HANDSHAKE: Invent a new secret handshake together." },
+            { type: 'question', phase: "ENTRÉE", mode: "THE DETECTIVE", prompt: "What is something you are suspicious of?" },
+            { type: 'question', phase: "ENTRÉE", mode: "THE PHILOSOPHER", prompt: "What is the meaning of 'enough'?" },
+            { type: 'challenge', phase: "ENTRÉE", mode: "", prompt: "TOUCH: Point to a body part, partner points to a different one." },
+            { type: 'question', phase: "ENTRÉE", mode: "THE TOUR GUIDE", prompt: "Show me your mental 'happy place' with your hands." },
+            { type: 'question', phase: "ENTRÉE", mode: "THE CYNIC", prompt: "What is a trend you wish would die?" },
 
-            // MAIN COURSES (Vulnerable, heavy constraints)
-            { phase: "MAIN COURSE", constraint: "Do not mention the fear itself, just the feeling.", prompt: "What is a fear you have?" },
-            { phase: "MAIN COURSE", constraint: "Describe the setting, not the event.", prompt: "What is a memory that makes you emotional?" },
-            { phase: "MAIN COURSE", constraint: "Look your partner in the eyes for the whole answer.", prompt: "What shaped who you are today?" },
-            { phase: "MAIN COURSE", constraint: "Speak as if it already happened.", prompt: "What do you hope to achieve by next year?" },
-            { phase: "MAIN COURSE", constraint: "Don't apologize.", prompt: "What is a mistake you wish you could apologize for?" },
-            { phase: "MAIN COURSE", constraint: "Describe a color or shape associated with it.", prompt: "When was the last time you felt truly at peace?" },
-            { phase: "MAIN COURSE", constraint: "Don't use the word 'I'.", prompt: "What relationship in your life needs more attention?" },
-            { phase: "MAIN COURSE", constraint: "Describe the weight of the value.", prompt: "What is a value you hold that caused conflict?" },
-            { phase: "MAIN COURSE", constraint: "Say it with a smile.", prompt: "What is a time you failed?" },
-            { phase: "MAIN COURSE", constraint: "Describe the silence after the moment.", prompt: "What have you never told anyone?" },
+            // MAIN COURSES (Deep, Vulnerable, Raw Challenges)
+            { type: 'question', phase: "MAIN COURSE", mode: "THE GHOST", prompt: "If you could haunt someone from your past, who would it be?" },
+            { type: 'challenge', phase: "MAIN COURSE", mode: "", prompt: "EYES: Look into each other's eyes for 45 seconds without speaking." },
+            { type: 'question', phase: "MAIN COURSE", mode: "THE CONFESSOR", prompt: "What is something you pretend to know, but don't?" },
+            { type: 'question', phase: "MAIN COURSE", mode: "THE SAGE", prompt: "What is the lesson life keeps hitting you with?" },
+            { type: 'challenge', phase: "MAIN COURSE", mode: "", prompt: "VOICE: Say 'I am here' in your most honest voice." },
+            { type: 'question', phase: "MAIN COURSE", mode: "THE PESSIMIST", prompt: "What is the worst thing that could happen this year?" },
+            { type: 'question', phase: "MAIN COURSE", mode: "THE WARRIOR", prompt: "What are you currently fighting a battle against?" },
+            { type: 'challenge', phase: "MAIN COURSE", mode: "", prompt: "SPACE: Get 1 inch closer to each other. Hold it." },
+            { type: 'question', phase: "MAIN COURSE", mode: "THE POET", prompt: "Describe a fear using only colors." },
+            { type: 'question', phase: "MAIN COURSE", mode: "THE REALIST", prompt: "What is a truth you need to tell someone?" },
 
-            // DESSERTS (Reflective, gentle constraints)
-            { phase: "DESSERT", constraint: "Speak slowly.", prompt: "What are you most grateful for right now?" },
-            { phase: "DESSERT", constraint: "Quote someone else describing it.", prompt: "What is a compliment you've never forgotten?" },
-            { phase: "DESSERT", constraint: "Describe the smell of it.", prompt: "What simple thing makes you happy?" },
-            { phase: "DESSERT", constraint: "Use only one syllable words.", prompt: "What question do you wish people asked more often?" },
-            { phase: "DESSERT", constraint: "Say it as if it's a secret.", prompt: "What memory do you hope you never forget?" },
-            { phase: "DESSERT", constraint: "Look upwards while answering.", prompt: "What do you want to be remembered for?" },
-            { phase: "DESSERT", constraint: "Describe the sound of it.", prompt: "What song makes you feel alive?" },
-            { phase: "DESSERT", constraint: "Point at something in the room while answering.", prompt: "What are you looking forward to tomorrow?" },
-            { phase: "DESSERT", constraint: "Answer 'The best thing is...'", prompt: "What is the best thing about meeting a stranger?" },
-            { phase: "DESSERT", constraint: "Nod while answering.", prompt: "What changed your life?" }
+            // DESSERTS (Sweet, Soft, Closing)
+            { type: 'question', phase: "DESSERT", mode: "THE ROMANTIC", prompt: "What is the love story of your life?" },
+            { type: 'challenge', phase: "DESSERT", mode: "", prompt: "HANDS: Trace your partner's palm for 10 seconds." },
+            { type: 'question', phase: "DESSERT", mode: "THE GRATEFUL", prompt: "Who are the people you couldn't live without?" },
+            { type: 'question', phase: "DESSERT", mode: "THE CHILD", prompt: "What do you wish you could go back and tell your parents?" },
+            { type: 'challenge', phase: "DESSERT", mode: "", prompt: "BOW: Take a deep breath, close your eyes, and bow to each other." },
+            { type: 'question', phase: "DESSERT", mode: "THE STORYTELLER", prompt: "Tell me about the moment you fell in love with life." },
+            { type: 'question', phase: "DESSERT", mode: "THE OPTIMIST", prompt: "What are you excited to discover?" },
+            { type: 'challenge', phase: "DESSERT", mode: "", prompt: "SILENCE: Sit in comfortable silence for 1 minute." },
+            { type: 'question', phase: "DESSERT", mode: "THE DREAMER", prompt: "Where do you want to go when this is over?" },
+            { type: 'question', phase: "DESSERT", mode: "THE FRIEND", prompt: "What is a favor you'd do for me?" }
         ];
 
         const archetypes = ["The Detective", "The Comedian", "The Stoic", "The Dramatic", "The Optimist", "The Pessimist"];
@@ -290,7 +311,8 @@
         let currentStep = 0;
         let isHost = false;
         let gameSeed = 0;
-        let shuffledCourses = [];
+        let shuffledDeck = [];
+        let isSyncing = false;
 
         function seededRandom(seed) {
             var x = Math.sin(seed++) * 10000;
@@ -300,7 +322,7 @@
         function shuffle(array, seed) {
             let m = array.length, t, i;
             let randomSeed = seed;
-            let result = array.slice(); 
+            let result = array.slice(); // Copy array
 
             while (m) {
                 i = Math.floor(seededRandom(randomSeed) * m--);
@@ -340,13 +362,13 @@
                 // Host generates seed
                 gameSeed = Math.floor(Math.random() * 999999);
                 
-                // Send seed to client immediately so they shuffle the same way
+                // Send seed to client immediately
                 if(conn && conn.open) {
                     conn.send({ type: 'INIT', seed: gameSeed });
                 }
 
                 setTimeout(() => {
-                    alert("Partner connected!");
+                    // alert("Partner connected!"); // Optional alert, disrupts flow
                     startGame();
                 }, 500);
             });
@@ -376,16 +398,15 @@
         function setupDataHandlers() {
             conn.on('data', (data) => {
                 if (data.type === 'INIT') {
-                    // Client received seed, shuffle deck
                     gameSeed = data.seed;
                     startGame();
                 } else if (data.step !== undefined) {
                     if (data.step === -1) {
-                        // Game Over Signal
                         returnToHome();
                     } else {
-                        // Normal Step Sync
                         updateUI(data.step);
+                        isSyncing = false; // Re-enable button
+                        document.getElementById('next-btn').disabled = false;
                     }
                 }
             });
@@ -395,7 +416,7 @@
 
         function startGame() {
             // Both players shuffle using the same seed
-            shuffledCourses = shuffle(baseQuestions, gameSeed);
+            shuffledDeck = shuffle(baseCards, gameSeed);
             
             document.getElementById('lobby').classList.add('hidden');
             document.getElementById('game').classList.remove('hidden');
@@ -404,16 +425,24 @@
         }
 
         function nextStep() {
-            if (currentStep < shuffledCourses.length - 1) {
+            if(isSyncing) return; // Prevent double clicks
+
+            if (currentStep < shuffledDeck.length - 1) {
                 currentStep++;
+                
+                // UI Feedback: Disable button
+                isSyncing = true;
+                document.getElementById('next-btn').disabled = true;
+                
+                // Update Local Immediately (Predictive UI)
                 updateUI(currentStep);
                 
+                // Send to Partner
                 if(conn && conn.open) {
                     conn.send({ step: currentStep });
                 }
             } else {
                 // --- END OF GAME LOOP ---
-                // Send -1 to signal game over to partner
                 if(conn && conn.open) {
                     conn.send({ step: -1 });
                 }
@@ -425,7 +454,9 @@
             document.getElementById('game').classList.add('hidden');
             document.getElementById('lobby').classList.remove('hidden');
             currentStep = 0;
-            // Connection remains open, so they can play again immediately
+            isSyncing = false;
+            document.getElementById('next-btn').disabled = false;
+            document.getElementById('next-btn').innerText = "Next";
         }
 
         function copyId() {
@@ -449,33 +480,51 @@
         // --- 6. UI UPDATES ---
         function updateUI(stepIndex) {
             currentStep = stepIndex;
-            const course = shuffledCourses[stepIndex];
+            const card = shuffledDeck[stepIndex];
             
             // Fade effect
-            const card = document.getElementById('game');
-            card.style.opacity = '0';
+            const gameCard = document.getElementById('game');
+            gameCard.style.opacity = '0';
             
             setTimeout(() => {
-                document.getElementById('step-counter').innerText = `${stepIndex + 1} / ${shuffledCourses.length}`;
+                document.getElementById('step-counter').innerText = `${stepIndex + 1} / ${shuffledDeck.length}`;
                 
-                // UPDATE: Now displaying the constraint instead of context
-                document.getElementById('constraint-text').innerText = `CONSTRAINT: ${course.constraint}`;
-                
-                document.getElementById('question-text').innerText = course.prompt;
-                
-                // Update Phase Color & Name
+                // Handle Phase Color
                 const phaseEl = document.getElementById('phase-indicator');
-                phaseEl.innerText = course.phase;
+                phaseEl.innerText = card.phase;
                 phaseEl.className = 'phase-tag';
-                if (course.phase === "APPETIZER") phaseEl.classList.add('phase-appetizer');
-                else if (course.phase === "ENTRÉE") phaseEl.classList.add('phase-entree');
-                else if (course.phase === "MAIN COURSE") phaseEl.classList.add('phase-main');
+                if (card.phase === "APPETIZER") phaseEl.classList.add('phase-appetizer');
+                else if (card.phase === "ENTRÉE") phaseEl.classList.add('phase-entree');
+                else if (card.phase === "MAIN COURSE") phaseEl.classList.add('phase-main');
                 else phaseEl.classList.add('phase-dessert');
+
+                // Handle Layout based on Type
+                const modeBox = document.getElementById('mode-box');
+                const challengeBox = document.getElementById('challenge-box');
+                const questionText = document.getElementById('question-text');
+                const nextBtn = document.getElementById('next-btn');
+
+                if (card.type === 'challenge') {
+                    // CHALLENGE VIEW
+                    modeBox.classList.add('hidden');
+                    questionText.classList.add('hidden');
+                    challengeBox.classList.remove('hidden');
+                    challengeBox.innerText = card.prompt; // Challenge acts as prompt here
+                    nextBtn.innerText = "Done";
+                } else {
+                    // QUESTION VIEW
+                    challengeBox.classList.add('hidden');
+                    questionText.classList.remove('hidden');
+                    modeBox.classList.remove('hidden');
+                    modeBox.innerText = `MODE: ${card.mode}`;
+                    questionText.innerText = card.prompt;
+                    nextBtn.innerText = "Next";
+                }
 
                 // Reset Archetype
                 document.getElementById('archetype-display').classList.add('hidden'); 
                 
-                card.style.opacity = '1';
+                gameCard.style.opacity = '1';
             }, 300);
         }
 
