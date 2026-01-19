@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>COURSES: The Synced Edition</title>
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <title>COURSES: Solo Mode</title>
     <style>
         body {
             font-family: 'Helvetica Neue', sans-serif;
@@ -68,18 +67,6 @@
             margin-top: 15px;
             font-size: 0.85rem;
             width: auto;
-        }
-
-        input {
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #444;
-            background: #111;
-            color: white;
-            width: 60%;
-            margin-bottom: 10px;
-            text-align: center;
-            font-size: 1.2rem;
         }
         
         /* The Mode Box */
@@ -150,15 +137,6 @@
         .phase-main { background: #1a1a33; color: #7a7aff; border: 1px solid #222255; }
         .phase-dessert { background: #332211; color: #ffaa55; border: 1px solid #553322; }
 
-        .loader { border-top: 3px solid #ff007f; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; margin: 20px auto; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        .copy-container { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 25px; }
-        .copy-btn { 
-            background: #333; padding: 10px 15px; border-radius: 8px; border: none; color: white; cursor: pointer; width: auto; margin-top: 0; font-size: 0.9rem;
-        }
-        .copy-btn:hover { background: #444; }
-
         /* Modal */
         .modal-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
@@ -203,35 +181,19 @@
     <!-- SCREEN 1: LOBBY -->
     <div id="lobby" class="card">
         <h1>Courses</h1>
-        <div class="subtitle">Connection through Chaos.</div>
+        <div class="subtitle">A Menu for Connection.</div>
         
-        <div id="host-section">
-            <button onclick="hostGame()" style="background: #00d2ff;">CREATE GAME (HOST)</button>
-            
-            <div class="loader hidden" id="loading-host"></div>
-            
-            <div id="id-display" class="copy-container hidden">
-                <span id="my-peer-id" style="font-family: monospace; font-size: 1.1rem; color: #00d2ff;">...</span>
-                <button class="copy-btn" onclick="copyId()" title="Copy ID">📋</button>
-            </div>
-            <div id="connection-status">Offline</div>
-        </div>
-
-        <div style="margin: 30px 0; border-bottom: 1px solid #333; width: 50%; margin-left: auto; margin-right: auto;"></div>
-
-        <div id="join-section">
-            <input type="text" id="partner-id" placeholder="Enter Host ID">
-            <button class="secondary" onclick="joinGame()">JOIN GAME</button>
-        </div>
-
+        <button onclick="startGame()" style="background: #00d2ff;">START EXPERIENCE</button>
+        
+        <p style="color: #666; font-size: 0.8rem; margin-top: 20px;">No connection required. Works offline.</p>
+        
         <button class="info-btn" onclick="openModal()">What are Archetypes?</button>
     </div>
 
     <!-- SCREEN 2: GAMEPLAY -->
     <div id="game" class="card hidden">
-        <div style="display: flex; justify-content: space-between; align-items: center; color: #666; font-size: 0.8rem; font-family: monospace;">
+        <div style="display: flex; justify-content: center; align-items: center; color: #666; font-size: 0.8rem; font-family: monospace;">
             <span id="step-counter">1 / 16</span>
-            <span>SYNC: <span id="status-dot" style="color:red">●</span></span>
         </div>
 
         <div id="phase-indicator" class="phase-tag phase-appetizer">APPETIZER</div>
@@ -246,13 +208,13 @@
         
         <h2 class="scenario-text" id="question-text">What is most overrated food trend?</h2>
 
-        <button id="next-btn" onclick="nextStep()">Next</button>
-        <button class="secondary hidden" id="skip-btn" onclick="returnToHome()">End Session</button>
+        <button id="next-btn" onclick="nextStep()">Next Turn</button>
+        <button class="secondary hidden" id="end-btn" onclick="endGame()">End Session</button>
         <button class="secondary" onclick="rollArchetype()">Roll Persona</button>
     </div>
 
     <script>
-        // --- 1. THE QUESTION BANKS (Source of Truth) ---
+        // --- 1. THE QUESTION BANKS ---
         
         const bankAppetizers = [
             { type: 'question', mode: "THE GOSSIP COLUMNIST", prompt: "What is a secret rumor you heard about yourself?" },
@@ -321,11 +283,11 @@
             { type: 'challenge', mode: "", prompt: "SILENCE: Sit in comfortable silence for 1 minute." }
         ];
 
-        // --- 2. DECK GENERATOR (Linear Progression + Uniqueness) ---
+        // --- 2. DECK GENERATOR ---
         
         function shuffle(array) {
             let m = array.length, t, i;
-            let result = array.slice(); // Copy array
+            let result = array.slice(); 
             while (m) {
                 i = Math.floor(Math.random() * m--);
                 t = result[m];
@@ -337,14 +299,12 @@
 
         function generateGameDeck() {
             let deck = [];
-            
-            // Helper to get random items
             const takeRandom = (bank, count) => shuffle(bank).slice(0, count);
             const takeOne = (bank) => shuffle(bank)[0];
 
             // PHASE 1: APPETIZERS (3 Questions + 1 Challenge)
             deck.push(...takeRandom(bankAppetizers, 3));
-            deck.push({ ...takeOne(bankChallenges), phase: "APPETIZER" }); // Add phase tag to challenge
+            deck.push({ ...takeOne(bankChallenges), phase: "APPETIZER" });
 
             // PHASE 2: ENTREES (3 Questions + 1 Challenge)
             deck.push(...takeRandom(bankEntrees, 3));
@@ -362,176 +322,32 @@
 
         const archetypes = ["The Detective", "The Comedian", "The Stoic", "The Dramatic", "The Optimist", "The Pessimist"];
 
-        // --- 3. PEERJS & SYNC SETUP ---
-        let peer;
-        let conn;
-        let currentStep = 0;
-        let isHost = false;
+        // --- 3. STATE ---
         let currentDeck = [];
-        let isSyncing = false;
+        let currentStep = 0;
 
-        function initPeer() {
-            peer = new Peer(null, { debug: 2 });
-
-            peer.on('open', (id) => {
-                document.getElementById('loading-host').classList.add('hidden');
-                document.getElementById('id-display').classList.remove('hidden');
-                document.getElementById('my-peer-id').innerText = id;
-                
-                if(isHost) {
-                    document.getElementById('connection-status').innerText = "Waiting for player...";
-                }
-            });
-
-            peer.on('error', (err) => {
-                console.error(err);
-                alert("Connection error. Please refresh.");
-            });
-        }
-
-        // --- 4. HOST LOGIC ---
-        function hostGame() {
-            if(conn && conn.open) return alert("You already have a connected player!");
-            
-            document.getElementById('loading-host').classList.remove('hidden');
-            isHost = true;
-            initPeer();
-            
-            peer.on('connection', (c) => {
-                if(conn && conn.open) {
-                    c.close(); // Reject extra connections
-                    return;
-                }
-                
-                conn = c;
-                setupDataHandlers();
-                
-                // Host generates the deck
-                currentDeck = generateGameDeck();
-                
-                // Send the WHOLE deck to joiner to ensure perfect sync
-                if(conn && conn.open) {
-                    conn.send({ type: 'START', deck: currentDeck });
-                }
-
-                document.getElementById('connection-status').innerText = "Connected";
-                document.getElementById('connection-status').classList.add('connected');
-
-                // Host starts immediately
-                startGame();
-            });
-        }
-
-        // --- 5. JOIN LOGIC ---
-        function joinGame() {
-            const partnerId = document.getElementById('partner-id').value;
-            if(!partnerId) return alert("Enter an ID");
-
-            initPeer();
-
-            peer.on('open', (id) => {
-                conn = peer.connect(partnerId);
-                conn.on('open', () => {
-                    setupDataHandlers();
-                    // Joiner waits for 'START' message with the deck
-                    document.getElementById('connection-status').innerText = "Syncing...";
-                });
-                
-                conn.on('error', (err) => {
-                    alert("Could not connect to ID. Check if it's correct.");
-                    document.getElementById('connection-status').innerText = "Connection Failed";
-                });
-            });
-        }
-
-        // --- 6. DATA HANDLERS ---
-        function setupDataHandlers() {
-            conn.on('data', (data) => {
-                if (data.type === 'START') {
-                    // Joiner receives the deck
-                    currentDeck = data.deck;
-                    
-                    document.getElementById('connection-status').innerText = "Connected";
-                    document.getElementById('connection-status').classList.add('connected');
-                    
-                    // Start the game UI
-                    startGame();
-                } else if (data.step !== undefined) {
-                    if (data.step === -1) {
-                        returnToHome();
-                    } else {
-                        // Sync Logic
-                        updateUI(data.step);
-                        isSyncing = false; 
-                        document.getElementById('next-btn').disabled = false;
-                    }
-                }
-            });
-            
-            // Handle Disconnection
-            conn.on('close', () => {
-                alert("Partner disconnected.");
-                document.getElementById('connection-status').innerText = "Disconnected";
-                document.getElementById('connection-status').classList.remove('connected');
-                if(!isHost) returnToHome();
-            });
-            
-            document.getElementById('status-dot').style.color = '#0f0'; // Green dot
-        }
-
+        // --- 4. GAME LOGIC ---
         function startGame() {
-            // Explicitly ensure screens swap
+            currentDeck = generateGameDeck();
+            currentStep = 0;
+            
             document.getElementById('lobby').classList.add('hidden');
             document.getElementById('game').classList.remove('hidden');
-            
-            currentStep = 0;
             updateUI(0);
         }
 
         function nextStep() {
-            if(isSyncing) return; 
-
             if (currentStep < currentDeck.length - 1) {
                 currentStep++;
-                
-                // Lock button
-                isSyncing = true;
-                document.getElementById('next-btn').disabled = true;
-                
-                // Update Local
                 updateUI(currentStep);
-                
-                // Send step to partner
-                if(conn && conn.open) {
-                    conn.send({ step: currentStep });
-                }
             } else {
-                // End Game
-                if(conn && conn.open) {
-                    conn.send({ step: -1 });
-                }
-                returnToHome();
+                endGame();
             }
         }
 
-        function returnToHome() {
+        function endGame() {
             document.getElementById('game').classList.add('hidden');
             document.getElementById('lobby').classList.remove('hidden');
-            currentStep = 0;
-            isSyncing = false;
-            document.getElementById('next-btn').disabled = false;
-            document.getElementById('next-btn').innerText = "Next";
-            document.getElementById('connection-status').innerText = isHost ? "Connected" : "Connected";
-        }
-
-        function copyId() {
-            const idText = document.getElementById('my-peer-id').innerText;
-            navigator.clipboard.writeText(idText).then(() => {
-                const btn = document.querySelector('.copy-btn');
-                const original = btn.innerText;
-                btn.innerText = "✅";
-                setTimeout(() => btn.innerText = original, 1500);
-            });
         }
 
         function openModal() {
@@ -542,13 +358,11 @@
             document.getElementById('modal').classList.add('hidden');
         }
 
-        // --- 7. UI UPDATES ---
+        // --- 5. UI UPDATES ---
         function updateUI(stepIndex) {
-            currentStep = stepIndex;
             const card = currentDeck[stepIndex];
             
-            // Determine phase based on index for questions without explicit phase
-            // (Challenges in deck have phase property injected)
+            // Determine phase
             let phase = card.phase;
             if (!phase) {
                 if (stepIndex < 4) phase = "APPETIZER";
@@ -556,7 +370,7 @@
                 else if (stepIndex < 12) phase = "MAIN COURSE";
                 else phase = "DESSERT";
             }
-            
+
             // Fade effect
             const gameCard = document.getElementById('game');
             gameCard.style.opacity = '0';
@@ -564,7 +378,7 @@
             setTimeout(() => {
                 document.getElementById('step-counter').innerText = `${stepIndex + 1} / ${currentDeck.length}`;
                 
-                // Handle Phase Color
+                // Phase Color
                 const phaseEl = document.getElementById('phase-indicator');
                 phaseEl.innerText = phase;
                 phaseEl.className = 'phase-tag';
@@ -573,27 +387,25 @@
                 else if (phase === "MAIN COURSE") phaseEl.classList.add('phase-main');
                 else phaseEl.classList.add('phase-dessert');
 
-                // Handle Layout based on Type
+                // Layout
                 const modeBox = document.getElementById('mode-box');
                 const challengeBox = document.getElementById('challenge-box');
                 const questionText = document.getElementById('question-text');
                 const nextBtn = document.getElementById('next-btn');
 
                 if (card.type === 'challenge') {
-                    // CHALLENGE VIEW
                     modeBox.classList.add('hidden');
                     questionText.classList.add('hidden');
                     challengeBox.classList.remove('hidden');
                     challengeBox.innerText = card.prompt;
                     nextBtn.innerText = "Done";
                 } else {
-                    // QUESTION VIEW
                     challengeBox.classList.add('hidden');
                     questionText.classList.remove('hidden');
                     modeBox.classList.remove('hidden');
                     modeBox.innerText = `MODE: ${card.mode}`;
                     questionText.innerText = card.prompt;
-                    nextBtn.innerText = "Next";
+                    nextBtn.innerText = "Next Turn";
                 }
 
                 // Reset Archetype
