@@ -82,12 +82,29 @@
             font-size: 1.2rem;
         }
         
-        .scenario-text { font-size: 1.4rem; line-height: 1.6; margin: 25px 0; font-weight: 500; min-height: 80px; display: flex; align-items: center; justify-content: center;}
-        .context { font-style: italic; color: #aaa; font-size: 0.95rem; margin-bottom: 20px; min-height: 50px; border-left: 2px solid #333; padding-left: 15px; display: flex; align-items: center;}
+        .scenario-text { font-size: 1.5rem; line-height: 1.6; margin: 25px 0; font-weight: 500; min-height: 80px; display: flex; align-items: center; justify-content: center; text-shadow: 0 2px 4px rgba(0,0,0,0.5);}
+        
+        /* The Constraint Box */
+        .constraint-box {
+            font-family: 'Courier New', monospace;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 1px;
+            color: #00d2ff;
+            border: 1px solid #00d2ff;
+            background: rgba(0, 210, 255, 0.05);
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
         
         .archetype { 
-            color: #00d2ff; 
-            border: 1px solid #00d2ff; 
+            color: #ff007f; 
+            border: 1px solid #ff007f; 
             padding: 6px 18px; 
             border-radius: 20px; 
             display: inline-block;
@@ -104,7 +121,7 @@
             letter-spacing: 2px;
             padding: 6px 12px;
             border-radius: 4px;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             display: inline-block;
             font-weight: bold;
         }
@@ -167,7 +184,7 @@
     <!-- SCREEN 1: LOBBY -->
     <div id="lobby" class="card">
         <h1>Courses</h1>
-        <div class="subtitle">A structured meal for two strangers.</div>
+        <div class="subtitle">Connection through Improv.</div>
         
         <div id="host-section">
             <button onclick="hostGame()">Host Game</button>
@@ -201,7 +218,9 @@
 
         <div id="archetype-display" class="archetype hidden">ARCHETYPE: THE DETECTIVE</div>
 
-        <div class="context" id="context-text">The waiter brings the small plates. The restaurant is buzzing, but we are focused on our table.</div>
+        <!-- NEW: The Constraint Box (Replaces Context) -->
+        <div class="constraint-box" id="constraint-text">CONSTRAINT: ANSWER IN 3 WORDS</div>
+        
         <h2 class="scenario-text" id="question-text">What is the most overrated food trend?</h2>
 
         <div style="display: flex; flex-direction: column; gap: 10px;">
@@ -211,57 +230,56 @@
     </div>
 
     <script>
-        // --- 1. THE DATA (The Large Menu - 50 Questions) ---
-        // You can easily add more to reach 100.
+        // --- 1. THE DATA (50 Questions with Constraints) ---
         
         const baseQuestions = [
-            // APPETIZERS
-            { context: "The waiter brings the small plates. The restaurant is buzzing, but we are focused on our table.", phase: "APPETIZER", prompt: "What is a food combination you love that others find weird?" },
-            { context: "We are sipping our drinks. The ice is just starting to melt.", phase: "APPETIZER", prompt: "What is a song you know every single word to, even though you don't like the artist?" },
-            { context: "We are people-watching near the window.", phase: "APPETIZER", prompt: "If you were a fictional character, who would people say you are?" },
-            { context: "The appetizers are finished, and we are getting comfortable.", phase: "APPETIZER", prompt: "What is a useless skill you have that you are weirdly proud of?" },
-            { context: "The music changes to a classic jazz track.", phase: "APPETIZER", prompt: "What was your first concert?" },
-            { context: "We are laughing at a joke the waiter told.", phase: "APPETIZER", prompt: "What is a movie everyone loves but you hated?" },
-            { context: "The lighting gets dimmer.", phase: "APPETIZER", prompt: "What is the most interesting conspiracy theory you know?" },
-            { context: "We notice a weird painting on the wall.", phase: "APPETIZER", prompt: "If you could have dinner with anyone, living or dead, who would it be?" },
-            { context: "We are waiting for our second drink.", phase: "APPETIZER", prompt: "What is a TV show you have watched more than 5 times?" },
-            { context: "We are discussing our day.", phase: "APPETIZER", prompt: "What is the most boring job you have ever had?" },
+            // APPETIZERS (Fun, light constraints)
+            { phase: "APPETIZER", constraint: "Answer in exactly 3 words.", prompt: "What is a food combination you love that others find weird?" },
+            { phase: "APPETIZER", constraint: "Sing your answer.", prompt: "What is a song you know every single word to?" },
+            { phase: "APPETIZER", constraint: "Lie for 10 seconds, then tell the truth.", prompt: "If you were a fictional character, who would you be?" },
+            { phase: "APPETIZER", constraint: "Be incredibly vague.", prompt: "What is a useless skill you have?" },
+            { phase: "APPETIZER", constraint: "Make up a backstory for it.", prompt: "What was your first concert?" },
+            { phase: "APPETIZER", constraint: "Describe it with your hands (mime).", prompt: "What is the most boring job you have ever had?" },
+            { phase: "APPETIZER", constraint: "Do not say the letter 'E'.", prompt: "What is a movie everyone loves but you hated?" },
+            { phase: "APPETIZER", constraint: "Argue against your own preference.", prompt: "Who would you love to have dinner with?" },
+            { phase: "APPETIZER", constraint: "Whisper your answer.", prompt: "What is a TV show you have watched 5+ times?" },
+            { phase: "APPETIZER", constraint: "Imitate a celebrity while answering.", prompt: "What is the most overrated food trend?" },
 
-            // ENTREES
-            { context: "The lights dim slightly. The main energy shifts. We are clearing the starters.", phase: "ENTRÉE", prompt: "What is a misconception people often have about you?" },
-            { context: "The waiter pours wine. We settle in for the talk.", phase: "ENTRÉE", prompt: "What is something you've changed your mind about in the last year?" },
-            { context: "We are cutting into our food. The conversation slows down.", phase: "ENTRÉE", prompt: "What is a piece of advice you wish you could give your younger self?" },
-            { context: "The restaurant is quieter now. We are in our own bubble.", phase: "ENTRÉE", prompt: "What is something you are currently procrastinating on?" },
-            { context: "We pause to taste a bite of the main course.", phase: "ENTRÉE", prompt: "What is a risk you took that you don't regret?" },
-            { context: "We discuss the future.", phase: "ENTRÉE", prompt: "What is something you want to achieve in the next 5 years?" },
-            { context: "The waiter checks on us. We look up briefly.", phase: "ENTRÉE", prompt: "What is a habit you are trying to break?" },
-            { context: "We lean back to make room for the food.", phase: "ENTRÉE", prompt: "What is the best thing that happened to you this week?" },
-            { context: "We talk about our hobbies.", phase: "ENTRÉE", prompt: "What is a hobby you spent too much money on?" },
-            { context: "The table is slightly cluttered with plates.", phase: "ENTRÉE", prompt: "What is something you learned the hard way?" },
+            // ENTREES (Going deeper, slightly more serious constraints)
+            { phase: "ENTRÉE", constraint: "Don't look at your partner while answering.", prompt: "What is a misconception people often have about you?" },
+            { phase: "ENTRÉE", constraint: "Pause for 5 seconds before speaking.", prompt: "What is something you've changed your mind about recently?" },
+            { phase: "ENTRÉE", constraint: "Use a metaphor.", prompt: "What is a piece of advice you'd give your younger self?" },
+            { phase: "ENTRÉE", constraint: "Speak in a monotone voice.", prompt: "What is something you are procrastinating on?" },
+            { phase: "ENTRÉE", constraint: "Describe the risk, not the result.", prompt: "What is a risk you took that you don't regret?" },
+            { phase: "ENTRÉE", constraint: "Count to 3 between every word.", prompt: "What do you want to achieve in the next 5 years?" },
+            { phase: "ENTRÉE", constraint: "Make it sound like a bad thing.", prompt: "What is a habit you are trying to break?" },
+            { phase: "ENTRÉE", constraint: "Describe a specific physical sensation.", prompt: "What is the best thing that happened this week?" },
+            { phase: "ENTRÉE", constraint: "Talk fast, as if in a hurry.", prompt: "What is a hobby you spent too much money on?" },
+            { phase: "ENTRÉE", constraint: "Answer 'I learned...' (The Stoic Way).", prompt: "What is something you learned the hard way?" },
 
-            // MAIN COURSES
-            { context: "The heavy plates are on the table. We aren't playing games anymore.", phase: "MAIN COURSE", prompt: "What is a fear you have that you've never admitted to anyone?" },
-            { context: "We pause eating for a moment. It's getting real.", phase: "MAIN COURSE", prompt: "What is a memory that still makes you emotional when you think about it?" },
-            { context: "The conversation has turned serious. We are looking each other in the eye.", phase: "MAIN COURSE", prompt: "What is something about your past that shaped who you are today?" },
-            { context: "We are discussing the future over the last bites of the main.", phase: "MAIN COURSE", prompt: "What is something you hope to have achieved by this time next year?" },
-            { context: "The plates are half-empty. We are vulnerable.", phase: "MAIN COURSE", prompt: "What is a mistake you made that you wish you could apologize for?" },
-            { context: "We stop eating for a second.", phase: "MAIN COURSE", prompt: "When was the last time you felt truly at peace?" },
-            { context: "The noise of the restaurant fades away.", phase: "MAIN COURSE", prompt: "What is a relationship in your life that needs more attention?" },
-            { context: "We are picking at the last bits of food.", phase: "MAIN COURSE", prompt: "What is a value you hold so strongly that it's caused conflict?" },
-            { context: "We discuss our failures.", phase: "MAIN COURSE", prompt: "What is a time you failed, and how did you recover?" },
-            { context: "The conversation is intense and focused.", phase: "MAIN COURSE", prompt: "What is something you've always wanted to tell someone but didn't?" },
+            // MAIN COURSES (Vulnerable, heavy constraints)
+            { phase: "MAIN COURSE", constraint: "Do not mention the fear itself, just the feeling.", prompt: "What is a fear you have?" },
+            { phase: "MAIN COURSE", constraint: "Describe the setting, not the event.", prompt: "What is a memory that makes you emotional?" },
+            { phase: "MAIN COURSE", constraint: "Look your partner in the eyes for the whole answer.", prompt: "What shaped who you are today?" },
+            { phase: "MAIN COURSE", constraint: "Speak as if it already happened.", prompt: "What do you hope to achieve by next year?" },
+            { phase: "MAIN COURSE", constraint: "Don't apologize.", prompt: "What is a mistake you wish you could apologize for?" },
+            { phase: "MAIN COURSE", constraint: "Describe a color or shape associated with it.", prompt: "When was the last time you felt truly at peace?" },
+            { phase: "MAIN COURSE", constraint: "Don't use the word 'I'.", prompt: "What relationship in your life needs more attention?" },
+            { phase: "MAIN COURSE", constraint: "Describe the weight of the value.", prompt: "What is a value you hold that caused conflict?" },
+            { phase: "MAIN COURSE", constraint: "Say it with a smile.", prompt: "What is a time you failed?" },
+            { phase: "MAIN COURSE", constraint: "Describe the silence after the moment.", prompt: "What have you never told anyone?" },
 
-            // DESSERTS
-            { context: "The waiter clears the heavy plates. We lean back, relieved.", phase: "DESSERT", prompt: "What is something you are most grateful for right now?" },
-            { context: "The dessert menu is between us. We are smiling.", phase: "DESSERT", prompt: "What is a compliment you've never forgotten?" },
-            { context: "We are sharing something sweet. The tension has dissolved.", phase: "DESSERT", prompt: "What is a simple thing that makes you happy?" },
-            { context: "The check has arrived, but we aren't leaving yet.", phase: "DESSERT", prompt: "What is a question you wish people would ask you more often?" },
-            { context: "We are finishing our coffee.", phase: "DESSERT", prompt: "What is a memory you hope you never forget?" },
-            { context: "The restaurant is closing up. We are the last ones.", phase: "DESSERT", prompt: "What is something you want to be remembered for?" },
-            { context: "We are standing up to leave.", phase: "DESSERT", prompt: "What is a song that makes you feel alive?" },
-            { context: "We are outside on the sidewalk.", phase: "DESSERT", prompt: "What is something you are looking forward to tomorrow?" },
-            { context: "We say goodbye.", phase: "DESSERT", prompt: "What is the best thing about meeting a stranger?" },
-            { context: "The night ends.", phase: "DESSERT", prompt: "What is a kindness someone showed you that changed your life?" }
+            // DESSERTS (Reflective, gentle constraints)
+            { phase: "DESSERT", constraint: "Speak slowly.", prompt: "What are you most grateful for right now?" },
+            { phase: "DESSERT", constraint: "Quote someone else describing it.", prompt: "What is a compliment you've never forgotten?" },
+            { phase: "DESSERT", constraint: "Describe the smell of it.", prompt: "What simple thing makes you happy?" },
+            { phase: "DESSERT", constraint: "Use only one syllable words.", prompt: "What question do you wish people asked more often?" },
+            { phase: "DESSERT", constraint: "Say it as if it's a secret.", prompt: "What memory do you hope you never forget?" },
+            { phase: "DESSERT", constraint: "Look upwards while answering.", prompt: "What do you want to be remembered for?" },
+            { phase: "DESSERT", constraint: "Describe the sound of it.", prompt: "What song makes you feel alive?" },
+            { phase: "DESSERT", constraint: "Point at something in the room while answering.", prompt: "What are you looking forward to tomorrow?" },
+            { phase: "DESSERT", constraint: "Answer 'The best thing is...'", prompt: "What is the best thing about meeting a stranger?" },
+            { phase: "DESSERT", constraint: "Nod while answering.", prompt: "What changed your life?" }
         ];
 
         const archetypes = ["The Detective", "The Comedian", "The Stoic", "The Dramatic", "The Optimist", "The Pessimist"];
@@ -274,7 +292,6 @@
         let gameSeed = 0;
         let shuffledCourses = [];
 
-        // --- 3. RANDOMIZATION ENGINE (The "100 Players" Logic) ---
         function seededRandom(seed) {
             var x = Math.sin(seed++) * 10000;
             return x - Math.floor(x);
@@ -283,17 +300,14 @@
         function shuffle(array, seed) {
             let m = array.length, t, i;
             let randomSeed = seed;
-            let result = array.slice(); // Copy array
+            let result = array.slice(); 
 
-            // While there remain elements to shuffle…
             while (m) {
-                // Pick a remaining element…
                 i = Math.floor(seededRandom(randomSeed) * m--);
-                // And swap it with the current element.
                 t = result[m];
                 result[m] = result[i];
                 result[i] = t;
-                randomSeed++; // Ensure next random call is deterministic
+                randomSeed++; 
             }
             return result;
         }
@@ -313,7 +327,7 @@
             });
         }
 
-        // --- 4. HOST LOGIC ---
+        // --- 3. HOST LOGIC ---
         function hostGame() {
             document.getElementById('loading-host').classList.remove('hidden');
             isHost = true;
@@ -338,7 +352,7 @@
             });
         }
 
-        // --- 5. JOIN LOGIC ---
+        // --- 4. JOIN LOGIC ---
         function joinGame() {
             const partnerId = document.getElementById('partner-id').value;
             if(!partnerId) return alert("Enter an ID");
@@ -358,7 +372,7 @@
             });
         }
 
-        // --- 6. DATA HANDLERS ---
+        // --- 5. DATA HANDLERS ---
         function setupDataHandlers() {
             conn.on('data', (data) => {
                 if (data.type === 'INIT') {
@@ -411,7 +425,7 @@
             document.getElementById('game').classList.add('hidden');
             document.getElementById('lobby').classList.remove('hidden');
             currentStep = 0;
-            // Connection remains open, so they can play again immediately or chat
+            // Connection remains open, so they can play again immediately
         }
 
         function copyId() {
@@ -432,7 +446,7 @@
             document.getElementById('modal').classList.add('hidden');
         }
 
-        // --- 7. UI UPDATES ---
+        // --- 6. UI UPDATES ---
         function updateUI(stepIndex) {
             currentStep = stepIndex;
             const course = shuffledCourses[stepIndex];
@@ -443,7 +457,10 @@
             
             setTimeout(() => {
                 document.getElementById('step-counter').innerText = `${stepIndex + 1} / ${shuffledCourses.length}`;
-                document.getElementById('context-text').innerText = course.context;
+                
+                // UPDATE: Now displaying the constraint instead of context
+                document.getElementById('constraint-text').innerText = `CONSTRAINT: ${course.constraint}`;
+                
                 document.getElementById('question-text').innerText = course.prompt;
                 
                 // Update Phase Color & Name
